@@ -20,13 +20,13 @@ export const swipeRight = async (req: Request, res: Response) => {
     }
 
     // Add to likes
-    if (!user.likes.includes(targetUser._id)) {
-      user.likes.push(targetUser._id);
+    if (!user.likes.some(id => id.toString() === targetUser._id.toString())) {
+      user.likes.push(targetUser._id as any);
       await user.save();
     }
 
     // Check if it's a match (mutual like)
-    if (targetUser.likes.includes(user._id)) {
+    if (targetUser.likes.some(id => id.toString() === user._id.toString())) {
       // Create match
       const match = new Match({
         user1: user._id,
@@ -35,8 +35,8 @@ export const swipeRight = async (req: Request, res: Response) => {
       await match.save();
 
       // Add to matches
-      user.matches.push(targetUser._id);
-      targetUser.matches.push(user._id);
+      user.matches.push(targetUser._id as any);
+      targetUser.matches.push(user._id as any);
       await user.save();
       await targetUser.save();
 
@@ -61,8 +61,8 @@ export const swipeLeft = async (req: Request, res: Response) => {
     }
 
     // Add to dislikes
-    if (!user.dislikes.includes(targetUserId)) {
-      user.dislikes.push(targetUserId);
+    if (!user.dislikes.some(id => id.toString() === targetUserId)) {
+      user.dislikes.push(targetUserId as any);
       await user.save();
     }
 

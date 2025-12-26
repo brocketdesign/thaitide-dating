@@ -2,17 +2,15 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
 import { userApi } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 export default function CreateProfilePage() {
   const router = useRouter();
-  const { user } = useUser();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
+    firstName: '',
+    lastName: '',
     dateOfBirth: '',
     gender: '',
     lookingFor: '',
@@ -26,14 +24,17 @@ export default function CreateProfilePage() {
     }
   });
 
+  const hasClerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && 
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.startsWith('pk_');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
       await userApi.createProfile({
-        clerkId: user?.id,
-        email: user?.emailAddresses[0]?.emailAddress,
+        clerkId: 'demo-user',
+        email: 'demo@example.com',
         ...formData
       });
 
@@ -49,6 +50,22 @@ export default function CreateProfilePage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  if (!hasClerkKey) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 py-12 px-4 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md">
+          <h2 className="text-2xl font-bold mb-4">Create Profile</h2>
+          <p className="text-gray-600 mb-4">
+            Please configure your Clerk API keys in the .env.local file to enable profile creation.
+          </p>
+          <div className="bg-gray-100 p-4 rounded-lg">
+            <code className="text-sm">NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...</code>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 py-12 px-4">

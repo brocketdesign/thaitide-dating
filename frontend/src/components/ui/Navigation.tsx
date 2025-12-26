@@ -16,6 +16,9 @@ export default function Navigation() {
     { path: '/premium', icon: <FaStar />, label: 'Premium' },
   ];
 
+  const hasClerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && 
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.startsWith('pk_');
+
   // Don't show navigation on landing page, sign-in, or sign-up
   if (pathname === '/' || pathname === '/sign-in' || pathname === '/sign-up') {
     return null;
@@ -52,7 +55,13 @@ export default function Navigation() {
 
           {/* User Button - hidden on mobile */}
           <div className="hidden md:block">
-            <UserButton afterSignOutUrl="/" />
+            {hasClerkKey ? (
+              <UserButton afterSignOutUrl="/" />
+            ) : (
+              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                <FaUser className="text-gray-500 text-sm" />
+              </div>
+            )}
           </div>
         </div>
       </div>

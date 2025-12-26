@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useUser } from '@clerk/nextjs';
 import { matchApi } from '@/lib/api';
 import { FaHeart, FaTimes, FaSlidersH } from 'react-icons/fa';
 import toast from 'react-hot-toast';
@@ -21,7 +20,6 @@ interface User {
 }
 
 export default function DiscoverPage() {
-  const { user: clerkUser } = useUser();
   const [users, setUsers] = useState<User[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);

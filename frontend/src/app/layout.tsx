@@ -1,19 +1,8 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from '@clerk/nextjs';
 import { Toaster } from 'react-hot-toast';
 import Navigation from '@/components/ui/Navigation';
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "ThaiTide - Modern Dating for Thai Singles & Foreigners",
@@ -25,19 +14,30 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const hasClerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && 
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.startsWith('pk_');
+
   return (
-    <ClerkProvider>
-      <html lang="en">
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
-          <Navigation />
-          <Toaster position="top-right" />
-          <div className="md:pt-16 pb-16 md:pb-0">
-            {children}
-          </div>
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="en">
+      <body className="antialiased font-sans">
+        {hasClerkKey ? (
+          <ClerkProvider>
+            <Navigation />
+            <Toaster position="top-right" />
+            <div className="md:pt-16 pb-16 md:pb-0">
+              {children}
+            </div>
+          </ClerkProvider>
+        ) : (
+          <>
+            <Navigation />
+            <Toaster position="top-right" />
+            <div className="md:pt-16 pb-16 md:pb-0">
+              {children}
+            </div>
+          </>
+        )}
+      </body>
+    </html>
   );
 }

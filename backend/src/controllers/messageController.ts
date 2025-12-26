@@ -37,7 +37,7 @@ export const getMessages = async (req: Request, res: Response) => {
     const { matchId } = req.params;
     const { page = 1, limit = 50 } = req.query;
 
-    const messages = await Message.find({ matchId })
+    const messages = await Message.find({ matchId: matchId as any })
       .sort({ createdAt: -1 })
       .limit(Number(limit))
       .skip((Number(page) - 1) * Number(limit))
