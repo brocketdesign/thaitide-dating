@@ -449,8 +449,8 @@ export const getMatchDetails = async (req: Request, res: Response) => {
     const { currentUserId } = req.query;
 
     const match = await Match.findById(matchId)
-      .populate('user1', 'firstName lastName profilePhoto dateOfBirth gender location updatedAt')
-      .populate('user2', 'firstName lastName profilePhoto dateOfBirth gender location updatedAt');
+      .populate('user1', 'firstName lastName profilePhoto dateOfBirth gender location updatedAt isAI bio interests')
+      .populate('user2', 'firstName lastName profilePhoto dateOfBirth gender location updatedAt isAI bio interests');
 
     if (!match) {
       return res.status(404).json({ message: 'Match not found' });
@@ -491,7 +491,10 @@ export const getMatchDetails = async (req: Request, res: Response) => {
         age: calculateAge(otherUser.dateOfBirth),
         gender: otherUser.gender,
         location: otherUser.location,
-        lastSeen: otherUser.updatedAt
+        lastSeen: otherUser.updatedAt,
+        isAI: otherUser.isAI || false,
+        bio: otherUser.bio,
+        interests: otherUser.interests
       },
       currentUser: {
         _id: currentUser._id,

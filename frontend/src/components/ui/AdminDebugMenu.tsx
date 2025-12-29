@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
-import { FaBug, FaUserSlash, FaCommentSlash, FaTrashAlt, FaTimes, FaRedo, FaUsers } from 'react-icons/fa';
+import { FaBug, FaUserSlash, FaCommentSlash, FaTrashAlt, FaTimes, FaRedo, FaUsers, FaRobot, FaMars, FaVenus } from 'react-icons/fa';
 
 const API_URL = typeof window !== 'undefined' 
   ? `${window.location.protocol}//${window.location.hostname}:5000/api`
@@ -21,6 +21,7 @@ export default function AdminDebugMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const [result, setResult] = useState<ActionResult | null>(null);
+  const [showAIMenu, setShowAIMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -130,6 +131,35 @@ export default function AdminDebugMenu() {
     }
   };
 
+  const handleGenerateAIProfile = async (gender: 'male' | 'female') => {
+    setShowAIMenu(false);
+    setLoading(`generate-ai-${gender}`);
+    setResult(null);
+
+    try {
+      const response = await fetch(`${API_URL}/admin/generate-ai-profile`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ gender }),
+      });
+
+      const data = await response.json();
+      setResult(data);
+
+      // Keep result visible longer for AI generation
+      setTimeout(() => setResult(null), 5000);
+    } catch (error) {
+      setResult({
+        success: false,
+        message: 'Failed to connect to server',
+      });
+    } finally {
+      setLoading(null);
+    }
+  };
+
   if (!isVisible) {
     return null;
   }
@@ -225,6 +255,43 @@ export default function AdminDebugMenu() {
                 <div className="ml-auto animate-spin w-4 h-4 border-2 border-green-400 border-t-transparent rounded-full" />
               )}
             </button>
+
+            {/* AI Profile Generation */}
+            <div className="relative">
+              <button
+                onClick={() => setShowAIMenu(!showAIMenu)}
+                disabled={loading !== null}
+                className="w-full flex items-center gap-3 px-3 py-2 text-left text-sm text-gray-200 hover:bg-gray-800 rounded-md transition-colors disabled:opacity-50"
+              >
+                <FaRobot className="text-cyan-400" />
+                <div>
+                  <div className="font-medium">Generate AI Profile</div>
+                  <div className="text-xs text-gray-400">OpenAI + Novita Flux</div>
+                </div>
+                {(loading === 'generate-ai-male' || loading === 'generate-ai-female') && (
+                  <div className="ml-auto animate-spin w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full" />
+                )}
+              </button>
+              
+              {showAIMenu && !loading && (
+                <div className="absolute left-0 right-0 mt-1 bg-gray-800 rounded-md border border-gray-600 overflow-hidden z-10">
+                  <button
+                    onClick={() => handleGenerateAIProfile('male')}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-gray-700 transition-colors"
+                  >
+                    <FaMars className="text-blue-400" />
+                    Generate Male Profile
+                  </button>
+                  <button
+                    onClick={() => handleGenerateAIProfile('female')}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-200 hover:bg-gray-700 transition-colors"
+                  >
+                    <FaVenus className="text-pink-400" />
+                    Generate Female Profile
+                  </button>
+                </div>
+              )}
+            </div>
 
             <div className="my-1 border-t border-gray-700" />
 

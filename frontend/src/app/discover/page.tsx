@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { matchApi, userApi, getImageUrl } from '@/lib/api';
-import { FaHeart, FaTimes, FaSlidersH, FaMapMarkerAlt, FaRulerVertical, FaWeight, FaCalendarAlt, FaSearch, FaChevronDown, FaUser, FaTh, FaSquare } from 'react-icons/fa';
+import { FaHeart, FaTimes, FaSlidersH, FaMapMarkerAlt, FaRulerVertical, FaWeight, FaCalendarAlt, FaSearch, FaChevronDown, FaUser, FaTh, FaSquare, FaRobot } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import MatchModal from '@/components/ui/MatchModal';
 import { useTranslation } from '@/lib/i18n';
@@ -26,6 +26,7 @@ interface User {
   relationshipStatus?: string;
   lookingFor?: string;
   createdAt?: string;
+  isAI?: boolean;
 }
 
 // Swipe Card Component
@@ -278,9 +279,17 @@ function SwipeCard({ user, onSwipe, calculateAge, onViewProfile, isTop, translat
 
             {/* Basic info overlay on photo */}
             <div className="absolute bottom-0 left-0 right-0 p-4 text-white z-10">
-              <h2 className="text-2xl font-bold drop-shadow-lg">
-                {user.firstName}, {calculateAge(user.dateOfBirth)}
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-2xl font-bold drop-shadow-lg">
+                  {user.firstName}, {calculateAge(user.dateOfBirth)}
+                </h2>
+                {user.isAI && (
+                  <span className="flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-xs rounded-full font-medium">
+                    <FaRobot className="text-[10px]" />
+                    AI
+                  </span>
+                )}
+              </div>
               <p className="text-white/90 text-sm flex items-center gap-1 drop-shadow">
                 <FaMapMarkerAlt className="text-pink-400" />
                 {user.location.city}, {user.location.country}
@@ -944,9 +953,17 @@ export default function DiscoverPage() {
                         <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/70 to-transparent"></div>
                         {/* Info overlay */}
                         <div className="absolute bottom-0 left-0 right-0 p-2 text-white">
-                          <h3 className="font-bold text-sm truncate">
-                            {user.firstName}, {calculateAge(user.dateOfBirth)}
-                          </h3>
+                          <div className="flex items-center gap-1">
+                            <h3 className="font-bold text-sm truncate">
+                              {user.firstName}, {calculateAge(user.dateOfBirth)}
+                            </h3>
+                            {user.isAI && (
+                              <span className="flex items-center gap-0.5 px-1 py-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-[8px] rounded-full font-medium">
+                                <FaRobot className="text-[6px]" />
+                                AI
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs text-white/80 flex items-center gap-1 truncate">
                             <FaMapMarkerAlt className="text-pink-400 flex-shrink-0" />
                             {user.location.city}

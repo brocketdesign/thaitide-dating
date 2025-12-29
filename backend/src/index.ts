@@ -18,6 +18,7 @@ import adminRoutes from './routes/admin';
 import { Message } from './models/Message';
 import { User } from './models/User';
 import { Match } from './models/Match';
+import { generateAIChatResponse } from './services/aiProfileGenerator';
 
 function getLocalIP(): string {
   const interfaces = os.networkInterfaces();
@@ -50,6 +51,9 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+// Make io available to routes (for AI chat responses)
+app.set('io', io);
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
@@ -89,20 +93,21 @@ io.on('connection', (socket) => {
         matchId: data.matchId,
         senderId: data.senderId,
         receiverId: data.receiverId,
-        content: data.content
+        content: data.content,
+        isAIGenerated: false
       });
 
       await message.save();
 
       // Update match's lastMessageAt timestamp so it appears first in conversation list
-      await Match.findByIdAndUpdate(
+      const match = await Match.findByIdAndUpdate(
         data.matchId,
         { lastMessageAt: new Date() },
         { new: true }
       );
 
       // Get sender info for notification
-      const sender = await User.findById(data.senderId).select('firstName profilePhoto');
+      const sender = await User.findById(data.senderId).select('firstName profilePhoto bio interests gender dateOfBirth location');
       
       // Get unread count for receiver
       const unreadCount = await Message.countDocuments({
@@ -135,6 +140,101 @@ io.on('connection', (socket) => {
 
       // Confirm to sender - include matchId at top level for convenience
       socket.emit('message_sent', { message, matchId: data.matchId });
+
+      // Check if receiver is an AI profile and generate response
+      const receiver = await User.findById(data.receiverId);
+      if (receiver && receiver.isAI) {
+        // Get conversation history for context (last 10 messages)
+        const recentMessages = await Message.find({ matchId: data.matchId as any })
+          .sort({ createdAt: -1 })
+          .limit(10);
+        
+        // Build conversation history for OpenAI
+        const conversationHistory = recentMessages.reverse().map(msg => ({
+          role: msg.senderId.toString() === data.receiverId ? 'assistant' as const : 'user' as const,
+          content: msg.content
+        }));
+
+        try {
+          // Calculate sender's age
+          let senderAge: number | undefined;
+          if (sender?.dateOfBirth) {
+            const today = new Date();
+            const birthDate = new Date(sender.dateOfBirth);
+            senderAge = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+              senderAge--;
+            }
+          }
+
+          // Generate AI response with full user context
+          const aiResponse = await generateAIChatResponse(
+            {
+              firstName: receiver.firstName,
+              bio: receiver.bio || '',
+              interests: receiver.interests,
+              gender: receiver.gender
+            },
+            {
+              firstName: sender?.firstName || 'friend',
+              bio: sender?.bio,
+              interests: sender?.interests,
+              gender: sender?.gender,
+              age: senderAge,
+              location: sender?.location?.city
+            },
+            conversationHistory
+          );
+
+          // Add small delay for natural feel (1-3 seconds)
+          const delay = 1000 + Math.random() * 2000;
+          setTimeout(async () => {
+            try {
+              // Save AI response
+              const aiMessage = new Message({
+                matchId: data.matchId,
+                senderId: data.receiverId,
+                receiverId: data.senderId,
+                content: aiResponse,
+                isAIGenerated: true
+              });
+
+              await aiMessage.save();
+
+              // Update last message time
+              await Match.findByIdAndUpdate(
+                data.matchId,
+                { lastMessageAt: new Date() }
+              );
+
+              // Send AI message to the original sender
+              const senderSocketId = userSockets.get(data.senderId);
+              if (senderSocketId) {
+                io.to(senderSocketId).emit('new_message', {
+                  matchId: data.matchId,
+                  message: {
+                    _id: aiMessage._id,
+                    matchId: data.matchId,
+                    senderId: data.receiverId,
+                    receiverId: data.senderId,
+                    content: aiResponse,
+                    read: false,
+                    isAIGenerated: true,
+                    createdAt: aiMessage.createdAt
+                  }
+                });
+              }
+
+              console.log(`🤖 AI response sent from ${receiver.firstName}: ${aiResponse.substring(0, 50)}...`);
+            } catch (aiSaveError) {
+              console.error('Error saving AI response:', aiSaveError);
+            }
+          }, delay);
+        } catch (aiError) {
+          console.error('Error generating AI response:', aiError);
+        }
+      }
     } catch (error) {
       console.error('Socket message error:', error);
       socket.emit('message_error', { error: 'Failed to send message' });

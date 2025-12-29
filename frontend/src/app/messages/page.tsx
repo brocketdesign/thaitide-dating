@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { messageApi, userApi, getImageUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
-import { FaCircle } from 'react-icons/fa';
+import { FaCircle, FaRobot } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import { useTranslation } from '@/lib/i18n';
 
@@ -20,6 +20,7 @@ interface Conversation {
       city?: string;
       country?: string;
     };
+    isAI?: boolean;
   };
   lastMessage: {
     content: string;
@@ -279,9 +280,17 @@ export default function MessagesListPage() {
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className={`font-semibold text-gray-800 ${conversation.unreadCount > 0 ? 'font-bold' : ''}`}>
-                      {conversation.user.firstName} {conversation.user.lastName}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className={`font-semibold text-gray-800 ${conversation.unreadCount > 0 ? 'font-bold' : ''}`}>
+                        {conversation.user.firstName} {conversation.user.lastName}
+                      </h3>
+                      {conversation.user.isAI && (
+                        <span className="flex items-center gap-0.5 px-1.5 py-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-[10px] rounded-full font-medium">
+                          <FaRobot className="text-[8px]" />
+                          AI
+                        </span>
+                      )}
+                    </div>
                     {conversation.lastMessage && (
                       <span className="text-xs text-gray-500">
                         {formatTime(conversation.lastMessage.createdAt)}

@@ -3,6 +3,7 @@ import { User } from '../models/User';
 import { Match } from '../models/Match';
 import { Message } from '../models/Message';
 import { resetSeedProfiles, seedProfiles } from '../seed/seedProfiles';
+import { createAIGeneratedProfile, startImageGeneration, checkImageGeneration } from '../services/aiProfileGenerator';
 
 const router = Router();
 
@@ -165,6 +166,87 @@ router.delete('/reset-all', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error resetting all:', error);
     res.status(500).json({ success: false, error: 'Failed to reset all data' });
+  }
+});
+
+// Generate a new AI profile
+router.post('/generate-ai-profile', async (req: Request, res: Response) => {
+  try {
+    const { gender } = req.body;
+    
+    if (!gender || !['male', 'female'].includes(gender)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Gender must be "male" or "female"' 
+      });
+    }
+
+    // Check if required API keys are configured
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'OpenAI API key not configured' 
+      });
+    }
+    
+    if (!process.env.NOVITA_API_KEY) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Novita API key not configured' 
+      });
+    }
+
+    console.log(`🤖 Starting AI profile generation for ${gender}...`);
+    
+    // Generate the complete profile
+    const profileData = await createAIGeneratedProfile(gender);
+    
+    // Save to database
+    const user = new User(profileData);
+    await user.save();
+    
+    console.log(`✅ AI profile created: ${user.firstName} ${user.lastName}`);
+
+    res.json({
+      success: true,
+      message: `AI profile created: ${user.firstName} ${user.lastName}`,
+      profile: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        gender: user.gender,
+        city: user.location.city,
+        bio: user.bio,
+        profilePhoto: user.profilePhoto
+      }
+    });
+  } catch (error: any) {
+    console.error('Error generating AI profile:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message || 'Failed to generate AI profile' 
+    });
+  }
+});
+
+// Check image generation task status
+router.get('/check-image-task/:taskId', async (req: Request, res: Response) => {
+  try {
+    const { taskId } = req.params;
+    const result = await checkImageGeneration(taskId);
+    
+    res.json({
+      success: true,
+      status: result.task.status,
+      progress: result.task.progress_percent,
+      imageUrl: result.images?.[0]?.image_url || null
+    });
+  } catch (error: any) {
+    console.error('Error checking image task:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message || 'Failed to check image task' 
+    });
   }
 });
 

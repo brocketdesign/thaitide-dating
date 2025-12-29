@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { Message } from '../models/Message';
 import { Match } from '../models/Match';
+import { User } from '../models/User';
+import { generateAIChatResponse } from '../services/aiProfileGenerator';
 
 export const sendMessage = async (req: Request, res: Response) => {
   try {
@@ -16,7 +18,8 @@ export const sendMessage = async (req: Request, res: Response) => {
       matchId,
       senderId,
       receiverId,
-      content
+      content,
+      isAIGenerated: false
     });
 
     await message.save();
@@ -24,6 +27,101 @@ export const sendMessage = async (req: Request, res: Response) => {
     // Update last message time on match
     match.lastMessageAt = new Date();
     await match.save();
+
+    // Check if the receiver is an AI profile
+    const receiver = await User.findById(receiverId);
+    if (receiver && receiver.isAI) {
+      // Get sender info for personalized response
+      const sender = await User.findById(senderId);
+      
+      // Get conversation history for context (last 10 messages)
+      const recentMessages = await Message.find({ matchId: matchId as any })
+        .sort({ createdAt: -1 })
+        .limit(10);
+      
+      // Build conversation history for OpenAI
+      const conversationHistory = recentMessages.reverse().map(msg => ({
+        role: msg.senderId.toString() === receiverId.toString() ? 'assistant' as const : 'user' as const,
+        content: msg.content
+      }));
+
+      try {
+        // Calculate sender's age
+        let senderAge: number | undefined;
+        if (sender?.dateOfBirth) {
+          const today = new Date();
+          const birthDate = new Date(sender.dateOfBirth);
+          senderAge = today.getFullYear() - birthDate.getFullYear();
+          const monthDiff = today.getMonth() - birthDate.getMonth();
+          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            senderAge--;
+          }
+        }
+
+        // Generate AI response with full user context
+        const aiResponse = await generateAIChatResponse(
+          {
+            firstName: receiver.firstName,
+            bio: receiver.bio || '',
+            interests: receiver.interests,
+            gender: receiver.gender
+          },
+          {
+            firstName: sender?.firstName || 'friend',
+            bio: sender?.bio,
+            interests: sender?.interests,
+            gender: sender?.gender,
+            age: senderAge,
+            location: sender?.location?.city
+          },
+          conversationHistory
+        );
+
+        // Add small delay for natural feel (1-3 seconds)
+        const delay = 1000 + Math.random() * 2000;
+        setTimeout(async () => {
+          try {
+            // Save AI response
+            const aiMessage = new Message({
+              matchId,
+              senderId: receiverId,
+              receiverId: senderId,
+              content: aiResponse,
+              isAIGenerated: true
+            });
+
+            await aiMessage.save();
+
+            // Update last message time
+            match.lastMessageAt = new Date();
+            await match.save();
+
+            // Emit via socket if available (handled by socket.io in index.ts)
+            const io = req.app.get('io');
+            if (io) {
+              io.emit('new_message', {
+                matchId,
+                message: {
+                  _id: aiMessage._id,
+                  matchId,
+                  senderId: receiverId,
+                  receiverId: senderId,
+                  content: aiResponse,
+                  read: false,
+                  isAIGenerated: true,
+                  createdAt: aiMessage.createdAt
+                }
+              });
+            }
+          } catch (aiError) {
+            console.error('Error saving AI response:', aiError);
+          }
+        }, delay);
+      } catch (aiError) {
+        console.error('Error generating AI response:', aiError);
+        // Continue without AI response - user message was still saved
+      }
+    }
 
     res.status(201).json({ message });
   } catch (error) {
@@ -81,8 +179,8 @@ export const getConversations = async (req: Request, res: Response) => {
     const matches = await Match.find({
       $or: [{ user1: userId }, { user2: userId }]
     } as any)
-      .populate('user1', 'firstName lastName profilePhoto location')
-      .populate('user2', 'firstName lastName profilePhoto location')
+      .populate('user1', 'firstName lastName profilePhoto location isAI')
+      .populate('user2', 'firstName lastName profilePhoto location isAI')
       .sort({ lastMessageAt: -1, createdAt: -1 });
 
     // Track seen user IDs to prevent duplicates

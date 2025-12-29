@@ -11,6 +11,7 @@ export interface IUser extends Document {
   dateOfBirth: Date;
   gender: 'male' | 'female' | 'other';
   lookingFor: 'male' | 'female' | 'both';
+  isAI: boolean; // Whether this is an AI-generated profile
   location: {
     type: 'Point';
     coordinates: [number, number]; // [longitude, latitude]
@@ -98,6 +99,7 @@ const userSchema = new Schema<IUser>(
     isPremium: { type: Boolean, default: false },
     premiumUntil: { type: Date },
     visibility: { type: Number, default: 0 },
+    isAI: { type: Boolean, default: false },
     likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     dislikes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     matches: [{ type: Schema.Types.ObjectId, ref: 'User' }],
