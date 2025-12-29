@@ -67,8 +67,6 @@ export default function RootLayout({
               <Toaster position="top-right" />
               <AdminDebugMenu />
               <PWAInstaller />
-              <div className="md:pt-16 pb-16 md:pb-0">
-                {children}
                 <div className="md:pt-16 pb-16 md:pb-0">
                   {children}
               </div>
