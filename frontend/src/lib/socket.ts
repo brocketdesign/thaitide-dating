@@ -1,13 +1,19 @@
 import { io, Socket } from 'socket.io-client';
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
+const getSocketUrl = () => {
+  if (typeof window !== 'undefined') {
+    const { protocol, hostname } = window.location;
+    return `${protocol}//${hostname}:5000`;
+  }
+  return process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
+};
 
 class SocketService {
   private socket: Socket | null = null;
 
   connect(userId: string) {
     if (!this.socket) {
-      this.socket = io(SOCKET_URL);
+      this.socket = io(getSocketUrl());
       
       this.socket.on('connect', () => {
         console.log('Socket connected');

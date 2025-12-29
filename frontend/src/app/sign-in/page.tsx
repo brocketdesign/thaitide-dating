@@ -1,10 +1,30 @@
 'use client';
 
-import { SignIn } from '@clerk/nextjs';
+import { useEffect } from 'react';
+import { SignIn, useClerk } from '@clerk/nextjs';
 
 export default function SignInPage() {
+  const { loaded } = useClerk();
+  
   const hasClerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && 
     process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.startsWith('pk_');
+
+  // Clear any stale auth data on sign-in page load
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Clear Clerk-related items from storage to prevent stale sessions
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('clerk') || key.startsWith('__clerk')) {
+          localStorage.removeItem(key);
+        }
+      });
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('clerk') || key.startsWith('__clerk')) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    }
+  }, []);
 
   if (!hasClerkKey) {
     return (

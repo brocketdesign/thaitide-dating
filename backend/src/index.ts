@@ -133,8 +133,8 @@ io.on('connection', (socket) => {
         });
       }
 
-      // Confirm to sender
-      socket.emit('message_sent', { message });
+      // Confirm to sender - include matchId at top level for convenience
+      socket.emit('message_sent', { message, matchId: data.matchId });
     } catch (error) {
       console.error('Socket message error:', error);
       socket.emit('message_error', { error: 'Failed to send message' });

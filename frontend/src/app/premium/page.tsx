@@ -4,9 +4,11 @@ import { useState } from 'react';
 import { subscriptionApi } from '@/lib/api';
 import { FaCheck, FaStar, FaBolt } from 'react-icons/fa';
 import toast from 'react-hot-toast';
+import { useTranslation } from '@/lib/i18n';
 
 export default function PremiumPage() {
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
 
   const handleSubscribe = async (plan: string) => {
     try {
@@ -15,10 +17,10 @@ export default function PremiumPage() {
       const response = await subscriptionApi.createCheckout(userId, plan);
       
       // In production, redirect to Stripe checkout
-      toast.success('Redirecting to checkout...');
+      toast.success(t.toasts.subscriptionCreated);
       console.log('Subscription created:', response.data);
     } catch (error) {
-      toast.error('Failed to create subscription');
+      toast.error(t.errors.failedToSave);
     } finally {
       setLoading(false);
     }
@@ -26,33 +28,18 @@ export default function PremiumPage() {
 
   const plans = [
     {
-      name: 'Premium',
+      name: t.premium.plans.premium.name,
       price: '$9.99',
-      interval: '/month',
-      features: [
-        'Unlimited likes',
-        'See who liked you',
-        'Boosted profile visibility',
-        'Advanced filters',
-        'No ads',
-        'Rewind last swipe'
-      ],
+      interval: t.premium.perMonth,
+      features: t.premium.plans.premium.features,
       gradient: 'from-pink-500 to-purple-600',
       icon: <FaStar className="text-3xl" />
     },
     {
-      name: 'Premium Plus',
+      name: t.premium.plans.premiumPlus.name,
       price: '$19.99',
-      interval: '/month',
-      features: [
-        'All Premium features',
-        'Priority in discovery',
-        '2x profile boost per week',
-        'Read receipts',
-        'Video calls',
-        'Premium badge',
-        'Priority support'
-      ],
+      interval: t.premium.perMonth,
+      features: t.premium.plans.premiumPlus.features,
       gradient: 'from-purple-600 to-indigo-600',
       icon: <FaBolt className="text-3xl" />,
       popular: true
@@ -64,10 +51,10 @@ export default function PremiumPage() {
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 mb-4">
-            Unlock Premium Features
+            {t.premium.title}
           </h1>
           <p className="text-xl text-gray-600">
-            Boost your chances of finding love with our premium plans
+            {t.premium.subtitle}
           </p>
         </div>
 
@@ -81,7 +68,7 @@ export default function PremiumPage() {
             >
               {plan.popular && (
                 <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-center py-2 font-semibold">
-                  MOST POPULAR
+                  {t.premium.popular}
                 </div>
               )}
               
@@ -111,7 +98,7 @@ export default function PremiumPage() {
                   disabled={loading}
                   className={`w-full bg-gradient-to-r ${plan.gradient} text-white py-4 rounded-lg font-semibold hover:shadow-xl transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
-                  {loading ? 'Processing...' : 'Subscribe Now'}
+                  {loading ? t.premium.processing : t.premium.subscribe}
                 </button>
               </div>
             </div>
@@ -119,8 +106,8 @@ export default function PremiumPage() {
         </div>
 
         <div className="mt-12 text-center text-gray-600">
-          <p className="mb-2">All plans include a 7-day free trial</p>
-          <p className="text-sm">Cancel anytime. No hidden fees.</p>
+          <p className="mb-2">{t.premium.freeTrial}</p>
+          <p className="text-sm">{t.premium.cancelAnytime}</p>
         </div>
       </div>
     </div>

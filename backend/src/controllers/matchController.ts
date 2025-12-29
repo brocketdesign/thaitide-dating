@@ -27,18 +27,32 @@ export const swipeRight = async (req: Request, res: Response) => {
 
     // Check if it's a match (mutual like)
     if (targetUser.likes.some(id => id.toString() === user._id.toString())) {
-      // Create match
-      const match = new Match({
-        user1: user._id,
-        user2: targetUser._id
-      });
-      await match.save();
+      // Check if a match/conversation already exists between these users
+      let match = await Match.findOne({
+        $or: [
+          { user1: user._id, user2: targetUser._id },
+          { user1: targetUser._id, user2: user._id }
+        ]
+      } as any);
 
-      // Add to matches
-      user.matches.push(targetUser._id as any);
-      targetUser.matches.push(user._id as any);
-      await user.save();
-      await targetUser.save();
+      // Only create a new match if one doesn't exist
+      if (!match) {
+        match = new Match({
+          user1: user._id,
+          user2: targetUser._id
+        });
+        await match.save();
+      }
+
+      // Add to matches arrays if not already there
+      if (!user.matches.some(id => id.toString() === targetUser._id.toString())) {
+        user.matches.push(targetUser._id as any);
+        await user.save();
+      }
+      if (!targetUser.matches.some(id => id.toString() === user._id.toString())) {
+        targetUser.matches.push(user._id as any);
+        await targetUser.save();
+      }
 
       return res.json({ matched: true, match });
     }

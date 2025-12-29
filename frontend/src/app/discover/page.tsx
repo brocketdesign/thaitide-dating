@@ -4,9 +4,10 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { matchApi, userApi, getImageUrl } from '@/lib/api';
-import { FaHeart, FaTimes, FaSlidersH, FaMapMarkerAlt, FaRulerVertical, FaWeight, FaCalendarAlt, FaSearch, FaChevronDown, FaUser } from 'react-icons/fa';
+import { FaHeart, FaTimes, FaSlidersH, FaMapMarkerAlt, FaRulerVertical, FaWeight, FaCalendarAlt, FaSearch, FaChevronDown, FaUser, FaTh, FaSquare } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import MatchModal from '@/components/ui/MatchModal';
+import { useTranslation } from '@/lib/i18n';
 
 interface User {
   _id: string;
@@ -34,12 +35,14 @@ interface SwipeCardProps {
   calculateAge: (dateOfBirth: string) => number;
   onViewProfile: () => void;
   isTop: boolean;
+  translations: any;
 }
 
-function SwipeCard({ user, onSwipe, calculateAge, onViewProfile, isTop }: SwipeCardProps) {
+function SwipeCard({ user, onSwipe, calculateAge, onViewProfile, isTop, translations }: SwipeCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [isHorizontalDrag, setIsHorizontalDrag] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [showLikeIndicator, setShowLikeIndicator] = useState(false);
   const [showNopeIndicator, setShowNopeIndicator] = useState(false);
@@ -48,10 +51,12 @@ function SwipeCard({ user, onSwipe, calculateAge, onViewProfile, isTop }: SwipeC
 
   const SWIPE_THRESHOLD = 100;
   const ROTATION_FACTOR = 0.1;
+  const HORIZONTAL_THRESHOLD = 10; // pixels before we consider it a horizontal drag
 
   const handleStart = useCallback((clientX: number, clientY: number) => {
     if (!isTop) return;
     setIsDragging(true);
+    setIsHorizontalDrag(false);
     setStartPos({ x: clientX, y: clientY });
   }, [isTop]);
 
@@ -61,24 +66,42 @@ function SwipeCard({ user, onSwipe, calculateAge, onViewProfile, isTop }: SwipeC
     const deltaX = clientX - startPos.x;
     const deltaY = clientY - startPos.y;
     
-    setPosition({ x: deltaX, y: deltaY });
-    
-    // Show indicators based on swipe direction
-    if (deltaX > 50) {
-      setShowLikeIndicator(true);
-      setShowNopeIndicator(false);
-    } else if (deltaX < -50) {
-      setShowLikeIndicator(false);
-      setShowNopeIndicator(true);
-    } else {
-      setShowLikeIndicator(false);
-      setShowNopeIndicator(false);
+    // Determine if this is a horizontal drag
+    if (!isHorizontalDrag) {
+      const absDeltaX = Math.abs(deltaX);
+      const absDeltaY = Math.abs(deltaY);
+      
+      // Only consider it a drag if horizontal movement is greater than vertical
+      if (absDeltaX > HORIZONTAL_THRESHOLD && absDeltaX > absDeltaY) {
+        setIsHorizontalDrag(true);
+      } else if (absDeltaY > absDeltaX) {
+        // Vertical movement is greater, don't drag
+        return;
+      }
     }
-  }, [isDragging, isTop, startPos]);
+    
+    // Only update position if it's a horizontal drag
+    if (isHorizontalDrag) {
+      setPosition({ x: deltaX, y: 0 });
+      
+      // Show indicators based on swipe direction
+      if (deltaX > 50) {
+        setShowLikeIndicator(true);
+        setShowNopeIndicator(false);
+      } else if (deltaX < -50) {
+        setShowLikeIndicator(false);
+        setShowNopeIndicator(true);
+      } else {
+        setShowLikeIndicator(false);
+        setShowNopeIndicator(false);
+      }
+    }
+  }, [isDragging, isTop, startPos, isHorizontalDrag]);
 
   const handleEnd = useCallback(() => {
     if (!isDragging || !isTop) return;
     setIsDragging(false);
+    setIsHorizontalDrag(false);
     
     if (position.x > SWIPE_THRESHOLD) {
       // Swipe right - like
@@ -304,7 +327,7 @@ function SwipeCard({ user, onSwipe, calculateAge, onViewProfile, isTop }: SwipeC
               )}
               <div className="flex items-center gap-2 bg-purple-50 px-3 py-2 rounded-lg">
                 <FaCalendarAlt className="text-purple-500 text-sm" />
-                <span className="text-sm text-gray-700">Joined {formatJoinDate(user.createdAt)}</span>
+                <span className="text-sm text-gray-700">{translations.discover.card.joined} {formatJoinDate(user.createdAt)}</span>
               </div>
               {user.lookingFor && (
                 <div className="flex items-center gap-2 bg-red-50 px-3 py-2 rounded-lg">
@@ -317,7 +340,7 @@ function SwipeCard({ user, onSwipe, calculateAge, onViewProfile, isTop }: SwipeC
             {/* Interests */}
             {user.interests.length > 0 && (
               <div>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase mb-2">Interests</h3>
+                <h3 className="text-xs font-semibold text-gray-500 uppercase mb-2">{translations.profile.interests}</h3>
                 <div className="flex flex-wrap gap-1.5">
                   {user.interests.map((interest, i) => (
                     <span
@@ -340,31 +363,11 @@ function SwipeCard({ user, onSwipe, calculateAge, onViewProfile, isTop }: SwipeC
               className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:shadow-lg transition-shadow"
             >
               <FaUser />
-              View Full Profile
+              {translations.common.viewProfile}
             </button>
           </div>
         </div>
       </div>
-
-      {/* Action Buttons */}
-      {isTop && (
-        <div className="flex justify-center gap-6 py-4">
-          <button
-            onClick={handleNopeClick}
-            disabled={isExiting}
-            className="w-16 h-16 bg-white rounded-full shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-transform disabled:opacity-50"
-          >
-            <FaTimes className="text-red-500 text-2xl" />
-          </button>
-          <button
-            onClick={handleLikeClick}
-            disabled={isExiting}
-            className="w-16 h-16 bg-gradient-to-r from-pink-500 to-red-500 rounded-full shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-transform disabled:opacity-50"
-          >
-            <FaHeart className="text-white text-2xl" />
-          </button>
-        </div>
-      )}
     </div>
   );
 }
@@ -372,11 +375,13 @@ function SwipeCard({ user, onSwipe, calculateAge, onViewProfile, isTop }: SwipeC
 export default function DiscoverPage() {
   const { user: clerkUser, isLoaded } = useUser();
   const router = useRouter();
+  const { t } = useTranslation();
   const [users, setUsers] = useState<User[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [profileChecked, setProfileChecked] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<'card' | 'grid'>('card');
   const [dbUserId, setDbUserId] = useState<string | null>(null);
   const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
   const [filters, setFilters] = useState({
@@ -396,6 +401,10 @@ export default function DiscoverPage() {
   
   // Track seen user IDs to prevent duplicates
   const [seenUserIds, setSeenUserIds] = useState<Set<string>>(new Set());
+  
+  // Track liked and passed users for grid view visual indicators
+  const [likedUserIds, setLikedUserIds] = useState<Set<string>>(new Set());
+  const [passedUserIds, setPassedUserIds] = useState<Set<string>>(new Set());
   
   // Match modal state
   const [showMatchModal, setShowMatchModal] = useState(false);
@@ -502,6 +511,49 @@ export default function DiscoverPage() {
     }
   };
 
+  // Handle swipe action in grid mode
+  const handleGridSwipe = async (userId: string, liked: boolean) => {
+    if (!dbUserId) return;
+    
+    // Check if already acted on this user
+    if (likedUserIds.has(userId) || passedUserIds.has(userId)) return;
+
+    const targetUser = users.find(u => u._id === userId);
+    if (!targetUser) return;
+
+    // Mark this user as seen
+    setSeenUserIds(prev => new Set(prev).add(userId));
+
+    try {
+      if (liked) {
+        const response = await matchApi.swipeRight(dbUserId, userId);
+        // Mark as liked visually
+        setLikedUserIds(prev => new Set(prev).add(userId));
+        if (response.data.matched) {
+          setMatchedUser(targetUser);
+          setMatchId(response.data.match._id);
+          setShowMatchModal(true);
+        }
+      } else {
+        await matchApi.swipeLeft(dbUserId, userId);
+        // Mark as passed visually
+        setPassedUserIds(prev => new Set(prev).add(userId));
+      }
+
+      // Load more users if running low on unacted cards
+      const actedCount = likedUserIds.size + passedUserIds.size + 1;
+      if (users.length - actedCount <= 4) {
+        loadPotentialMatches(false);
+      }
+    } catch (error: any) {
+      if (error.response?.status === 403) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('Failed to process action');
+      }
+    }
+  };
+
   const calculateAge = (dateOfBirth: string) => {
     const today = new Date();
     const birthDate = new Date(dateOfBirth);
@@ -518,7 +570,7 @@ export default function DiscoverPage() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 via-white to-purple-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-pink-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Finding matches...</p>
+          <p className="text-gray-600">{t.common.loading}</p>
         </div>
       </div>
     );
@@ -530,21 +582,48 @@ export default function DiscoverPage() {
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600">
-            Discover
+            {t.discover.title}
           </h1>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="p-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-shadow"
-          >
-            <FaSlidersH className="text-purple-600" />
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Layout Toggle */}
+            <div className="flex bg-white rounded-full shadow-lg p-1">
+              <button
+                onClick={() => setViewMode('card')}
+                className={`p-2 rounded-full transition-all ${
+                  viewMode === 'card'
+                    ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white'
+                    : 'text-gray-500 hover:text-purple-600'
+                }`}
+                title={t.discover.layout?.card || 'Card View'}
+              >
+                <FaSquare className="text-sm" />
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded-full transition-all ${
+                  viewMode === 'grid'
+                    ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white'
+                    : 'text-gray-500 hover:text-purple-600'
+                }`}
+                title={t.discover.layout?.grid || 'Grid View'}
+              >
+                <FaTh className="text-sm" />
+              </button>
+            </div>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="p-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-shadow"
+            >
+              <FaSlidersH className="text-purple-600" />
+            </button>
+          </div>
         </div>
 
         {/* Filters Panel */}
         {showFilters && (
           <div className="bg-white rounded-2xl shadow-xl p-6 mb-6 max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-semibold text-lg">Search Settings</h3>
+              <h3 className="font-semibold text-lg">{t.discover.filters.title}</h3>
               <button
                 onClick={() => setShowFilters(false)}
                 className="text-gray-500 hover:text-gray-700"
@@ -558,7 +637,7 @@ export default function DiscoverPage() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-sm font-medium text-gray-700">
-                    Distance: {filters.maxDistance === 0 ? 'Any' : `${filters.maxDistance} km`}
+                    {t.discover.filters.distance}: {filters.maxDistance === 0 ? t.discover.filters.anyLocation : `${filters.maxDistance} ${t.discover.filters.km}`}
                   </label>
                   <label className="flex items-center gap-2 text-sm text-gray-600">
                     <input
@@ -567,7 +646,7 @@ export default function DiscoverPage() {
                       onChange={(e) => setFilters({ ...filters, maxDistance: e.target.checked ? 0 : 50 })}
                       className="rounded border-gray-300 text-pink-500 focus:ring-pink-500"
                     />
-                    Any distance
+                    {t.discover.filters.anyLocation}
                   </label>
                 </div>
                 {filters.maxDistance !== 0 && (
@@ -585,7 +664,7 @@ export default function DiscoverPage() {
               {/* Age Range */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Age Range: {filters.minAge} - {filters.maxAge}
+                  {t.discover.filters.ageRange}: {filters.minAge} - {filters.maxAge}
                 </label>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -758,56 +837,166 @@ export default function DiscoverPage() {
                 onClick={() => loadPotentialMatches(true)}
                 className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-shadow mt-6"
               >
-                Apply Filters
+                {t.common.apply}
               </button>
             </div>
           </div>
         )}
 
-        {/* Profile Card Stack */}
-        <div className="relative h-[580px] mb-4 overflow-hidden">
-          {/* Next card (behind) */}
-          {users[currentIndex + 1] && (
-            <SwipeCard
-              key={users[currentIndex + 1]._id}
-              user={users[currentIndex + 1]}
-              onSwipe={() => {}}
-              calculateAge={calculateAge}
-              onViewProfile={() => {}}
-              isTop={false}
-            />
-          )}
-          {/* Current card (top) */}
-          {users[currentIndex] && (
-            <SwipeCard
-              key={users[currentIndex]._id}
-              user={users[currentIndex]}
-              onSwipe={handleSwipe}
-              calculateAge={calculateAge}
-              onViewProfile={() => router.push(`/profile/${users[currentIndex]._id}`)}
-              isTop={true}
-            />
-          )}
+        {/* Card View Mode */}
+        {viewMode === 'card' && (
+          <div className="relative h-[580px] mb-4 overflow-hidden">
+            {/* Next card (behind) */}
+            {users[currentIndex + 1] && (
+              <SwipeCard
+                key={users[currentIndex + 1]._id}
+                user={users[currentIndex + 1]}
+                onSwipe={() => {}}
+                calculateAge={calculateAge}
+                onViewProfile={() => {}}
+                isTop={false}
+                translations={t}
+              />
+            )}
+            {/* Current card (top) */}
+            {users[currentIndex] && (
+              <SwipeCard
+                key={users[currentIndex]._id}
+                user={users[currentIndex]}
+                onSwipe={handleSwipe}
+                calculateAge={calculateAge}
+                onViewProfile={() => router.push(`/profile/${users[currentIndex]._id}`)}
+                isTop={true}
+                translations={t}
+              />
+            )}
 
-          {/* Empty State - No more profiles */}
-          {currentIndex >= users.length && (
-            <div className="absolute inset-0 flex items-center justify-center">
+            {/* Empty State - No more profiles */}
+            {currentIndex >= users.length && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
+                  <div className="text-6xl mb-4">🎉</div>
+                  <h3 className="text-2xl font-bold mb-2">{t.discover.noMoreProfiles}</h3>
+                  <p className="text-gray-600 mb-6">
+                    {t.discover.checkBackLater}
+                  </p>
+                  <button
+                    onClick={() => setShowFilters(true)}
+                    className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold"
+                  >
+                    {t.discover.adjustFilters}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Grid View Mode */}
+        {viewMode === 'grid' && (
+          <div className="mb-4">
+            {users.length > 0 ? (
+              <div className="grid grid-cols-2 gap-3">
+                {users.slice(currentIndex).map((user) => {
+                  const isLiked = likedUserIds.has(user._id);
+                  const isPassed = passedUserIds.has(user._id);
+                  const isActedOn = isLiked || isPassed;
+                  
+                  return (
+                    <div
+                      key={user._id}
+                      className={`bg-white rounded-xl shadow-lg overflow-hidden cursor-pointer hover:shadow-xl transition-all ${
+                        isPassed ? 'grayscale' : ''
+                      }`}
+                      onClick={() => router.push(`/profile/${user._id}`)}
+                    >
+                      {/* Photo */}
+                      <div className="relative aspect-[3/4] bg-gradient-to-br from-pink-100 to-purple-100">
+                        {user.profilePhoto ? (
+                          <img
+                            src={getImageUrl(user.profilePhoto)}
+                            alt={user.firstName}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-4xl">👤</div>
+                        )}
+                        
+                        {/* Liked overlay with heart */}
+                        {isLiked && (
+                          <div className="absolute inset-0 bg-pink-500/30 flex items-center justify-center">
+                            <div className="bg-white/90 rounded-full p-4">
+                              <FaHeart className="text-pink-500 text-3xl" />
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Passed overlay with X */}
+                        {isPassed && (
+                          <div className="absolute inset-0 bg-gray-500/30 flex items-center justify-center">
+                            <div className="bg-white/90 rounded-full p-4">
+                              <FaTimes className="text-gray-600 text-3xl" />
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Gradient overlay */}
+                        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/70 to-transparent"></div>
+                        {/* Info overlay */}
+                        <div className="absolute bottom-0 left-0 right-0 p-2 text-white">
+                          <h3 className="font-bold text-sm truncate">
+                            {user.firstName}, {calculateAge(user.dateOfBirth)}
+                          </h3>
+                          <p className="text-xs text-white/80 flex items-center gap-1 truncate">
+                            <FaMapMarkerAlt className="text-pink-400 flex-shrink-0" />
+                            {user.location.city}
+                          </p>
+                        </div>
+                      </div>
+                      {/* Action buttons - hide if already acted on */}
+                      {!isActedOn && (
+                        <div className="flex justify-center gap-2 p-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleGridSwipe(user._id, false);
+                            }}
+                            className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-red-100 transition-colors"
+                          >
+                            <FaTimes className="text-red-500" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleGridSwipe(user._id, true);
+                            }}
+                            className="w-10 h-10 bg-gradient-to-r from-pink-500 to-red-500 rounded-full flex items-center justify-center hover:shadow-lg transition-shadow"
+                          >
+                            <FaHeart className="text-white" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
               <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
                 <div className="text-6xl mb-4">🎉</div>
-                <h3 className="text-2xl font-bold mb-2">No more profiles!</h3>
+                <h3 className="text-2xl font-bold mb-2">{t.discover.noMoreProfiles}</h3>
                 <p className="text-gray-600 mb-6">
-                  Check back later for new matches or adjust your filters
+                  {t.discover.checkBackLater}
                 </p>
                 <button
                   onClick={() => setShowFilters(true)}
                   className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold"
                 >
-                  Adjust Filters
+                  {t.discover.adjustFilters}
                 </button>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Match Modal */}

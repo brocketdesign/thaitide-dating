@@ -6,6 +6,7 @@ import { FaHeart, FaPaperPlane, FaTimes } from 'react-icons/fa';
 import { getImageUrl, matchApi, userApi } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { useUser } from '@clerk/nextjs';
+import { useTranslation } from '@/lib/i18n';
 
 interface MatchModalProps {
   isOpen: boolean;
@@ -32,6 +33,7 @@ export default function MatchModal({
 }: MatchModalProps) {
   const router = useRouter();
   const { user: clerkUser } = useUser();
+  const { t } = useTranslation();
   const [isAnimating, setIsAnimating] = useState(false);
   const [showContent, setShowContent] = useState(false);
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
@@ -53,11 +55,18 @@ export default function MatchModal({
     setIsCreatingConversation(true);
     try {
       if (!clerkUser) {
-        toast.error('Please log in to send a message');
+        toast.error(t.errors.unauthorized);
         return;
       }
 
-      // Get current user ID from database
+      // Use the matchId passed from the match creation if available
+      if (matchId) {
+        router.push(`/messages/${matchId}`);
+        onClose();
+        return;
+      }
+
+      // Fallback: Get current user ID from database and create/get conversation
       const profileResponse = await userApi.getProfileByClerkId(clerkUser.id);
       const currentUserId = profileResponse.data.user._id;
 
@@ -69,7 +78,7 @@ export default function MatchModal({
       onClose();
     } catch (error: any) {
       console.error('Error creating conversation:', error);
-      toast.error('Failed to start conversation. Please try again.');
+      toast.error(t.errors.failedToLoad);
       setIsCreatingConversation(false);
     }
   };
@@ -120,9 +129,9 @@ export default function MatchModal({
       }`}>
         {/* Title with sparkles */}
         <div className="text-center mb-8">
-          <p className="text-white/80 text-lg mb-2">✨ Congratulations! ✨</p>
+          <p className="text-white/80 text-lg mb-2">{t.matchModal.congratulations}</p>
           <h1 className="text-5xl md:text-6xl font-extrabold text-white animate-pulse-slow">
-            It's a Match!
+            {t.matchModal.itsAMatch}
           </h1>
         </div>
 
@@ -185,8 +194,7 @@ export default function MatchModal({
 
         {/* Match message */}
         <p className="text-white/90 text-center text-lg mb-8 max-w-md">
-          You and <span className="font-bold">{matchedUser.firstName}</span> liked each other!<br />
-          Start a conversation now 💕
+          {t.matchModal.youAndLikedEachOther.replace('{name}', matchedUser.firstName)} 💕
         </p>
 
         {/* Action buttons */}
@@ -199,13 +207,13 @@ export default function MatchModal({
             className="flex-1 flex items-center justify-center gap-3 bg-white text-pink-600 px-8 py-4 rounded-full font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FaPaperPlane className="text-xl" />
-            {isCreatingConversation ? 'Starting...' : 'Send a Message'}
+            {isCreatingConversation ? t.common.loading : t.matchModal.sendMessage}
           </button>
           <button
             onClick={handleKeepSwiping}
             className="flex-1 flex items-center justify-center gap-3 bg-white/20 backdrop-blur-sm text-white px-8 py-4 rounded-full font-bold text-lg border-2 border-white/30 hover:bg-white/30 hover:scale-105 transition-all"
           >
-            Keep Swiping
+            {t.matchModal.keepSwiping}
           </button>
         </div>
       </div>

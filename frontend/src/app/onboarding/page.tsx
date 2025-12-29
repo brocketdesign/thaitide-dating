@@ -6,6 +6,7 @@ import { useUser } from '@clerk/nextjs';
 import { userApi, uploadApi, getImageUrl } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { FaHeart, FaUser, FaMapMarkerAlt, FaPen, FaCamera, FaCheck, FaArrowRight, FaArrowLeft, FaUpload, FaShieldAlt, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
+import { useTranslation } from '@/lib/i18n';
 
 const STORAGE_KEY = 'onboarding_state';
 
@@ -56,6 +57,7 @@ interface ProfileData {
 export default function OnboardingPage() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
+  const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentStep, setCurrentStep] = useState<Step>('welcome');
   const [loading, setLoading] = useState(false);
@@ -98,7 +100,7 @@ export default function OnboardingPage() {
         setProfileData(data);
         setPhotoVerified(savedPhotoVerified);
         setPhotoPreview(savedPhotoPreview);
-        toast.success('Welcome back! Continuing from where you left off.');
+        // Toast will show in the component, but we can add a message here if needed
       } catch (error) {
         console.error('Failed to restore onboarding state:', error);
       }
@@ -208,7 +210,7 @@ export default function OnboardingPage() {
       // Clear saved state from localStorage on successful completion
       localStorage.removeItem(STORAGE_KEY);
       
-      toast.success('Profile created successfully! 🎉');
+      toast.success(t.toasts.profileCreated);
       setCurrentStep('complete');
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to create profile');
@@ -273,7 +275,7 @@ export default function OnboardingPage() {
         setProfileData(prev => ({ ...prev, profilePhoto: response.data.photoUrl }));
         setPhotoPreview(getImageUrl(response.data.photoUrl));
         setPhotoVerified(true);
-        toast.success('Photo verified successfully! ✓');
+        toast.success(t.toasts.photoUploaded);
       } else {
         setPhotoError(response.data.message || 'Photo verification failed');
         setPhotoPreview(null);
@@ -339,36 +341,36 @@ export default function OnboardingPage() {
               <FaHeart className="text-white text-4xl" />
             </div>
             <h1 className="text-4xl font-bold text-gray-800 mb-4">
-              Welcome to ThaiTide! 🌊
+              {t.onboarding.welcome.title}
             </h1>
             <p className="text-xl text-gray-600 mb-8">
-              Let's create your profile and help you find your perfect match
+              {t.onboarding.welcome.subtitle}
             </p>
             <div className="space-y-4 text-left max-w-md mx-auto mb-8">
               <div className="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm">
                 <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center">
                   <FaUser className="text-pink-500" />
                 </div>
-                <span className="text-gray-700">Tell us about yourself</span>
+                <span className="text-gray-700">{t.onboarding.welcome.steps.basic}</span>
               </div>
               <div className="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm">
                 <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
                   <FaHeart className="text-purple-500" />
                 </div>
-                <span className="text-gray-700">Share what you're looking for</span>
+                <span className="text-gray-700">{t.onboarding.welcome.steps.preferences}</span>
               </div>
               <div className="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm">
                 <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                   <FaCamera className="text-blue-500" />
                 </div>
-                <span className="text-gray-700">Add your best photos</span>
+                <span className="text-gray-700">{t.onboarding.welcome.steps.photos}</span>
               </div>
             </div>
             <button
               onClick={nextStep}
               className="px-12 py-4 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-full text-lg font-semibold hover:shadow-xl transform hover:scale-105 transition-all inline-flex items-center gap-2"
             >
-              Get Started <FaArrowRight />
+              {t.onboarding.welcome.getStarted} <FaArrowRight />
             </button>
           </div>
         )}
@@ -381,8 +383,8 @@ export default function OnboardingPage() {
                 <FaUser className="text-pink-500 text-xl" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-800">Basic Info</h2>
-                <p className="text-gray-500">Let's start with the basics</p>
+                <h2 className="text-2xl font-bold text-gray-800">{t.onboarding.basic.title}</h2>
+                <p className="text-gray-500">{t.onboarding.about.title}</p>
               </div>
             </div>
 
@@ -390,33 +392,33 @@ export default function OnboardingPage() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    First Name *
+                    {t.onboarding.basic.firstName} *
                   </label>
                   <input
                     type="text"
                     value={profileData.firstName}
                     onChange={(e) => setProfileData({ ...profileData, firstName: e.target.value })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
-                    placeholder="Your first name"
+                    placeholder={t.onboarding.basic.firstName}
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Last Name *
+                    {t.onboarding.basic.lastName} *
                   </label>
                   <input
                     type="text"
                     value={profileData.lastName}
                     onChange={(e) => setProfileData({ ...profileData, lastName: e.target.value })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
-                    placeholder="Your last name"
+                    placeholder={t.onboarding.basic.lastName}
                   />
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Birthday *
+                  {t.onboarding.basic.dateOfBirth} *
                 </label>
                 <input
                   type="date"
@@ -425,18 +427,17 @@ export default function OnboardingPage() {
                   max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
                 />
-                <p className="text-sm text-gray-500 mt-1">You must be 18+ to use ThaiTide</p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
-                  I am a *
+                  {t.onboarding.basic.gender} *
                 </label>
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { value: 'male', label: '👨 Man' },
-                    { value: 'female', label: '👩 Woman' },
-                    { value: 'other', label: '🌈 Other' }
+                    { value: 'male', label: `👨 ${t.onboarding.basic.genderOptions.male}` },
+                    { value: 'female', label: `👩 ${t.onboarding.basic.genderOptions.female}` },
+                    { value: 'other', label: `🌈 ${t.onboarding.basic.genderOptions.other}` }
                   ].map((option) => (
                     <button
                       key={option.value}
@@ -460,14 +461,14 @@ export default function OnboardingPage() {
                 onClick={prevStep}
                 className="px-6 py-3 text-gray-600 hover:text-gray-800 transition-colors inline-flex items-center gap-2"
               >
-                <FaArrowLeft /> Back
+                <FaArrowLeft /> {t.common.back}
               </button>
               <button
                 onClick={nextStep}
                 disabled={!profileData.firstName || !profileData.lastName || !profileData.dateOfBirth || !profileData.gender}
                 className="px-8 py-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-full font-semibold hover:shadow-lg transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
               >
-                Continue <FaArrowRight />
+                {t.common.next} <FaArrowRight />
               </button>
             </div>
           </div>
@@ -481,21 +482,21 @@ export default function OnboardingPage() {
                 <FaHeart className="text-purple-500 text-xl" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-800">Looking For</h2>
-                <p className="text-gray-500">Tell us about your ideal match</p>
+                <h2 className="text-2xl font-bold text-gray-800">{t.onboarding.lookingFor.title}</h2>
+                <p className="text-gray-500">{t.profile.details.lookingFor}</p>
               </div>
             </div>
 
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
-                  I'm interested in *
+                  {t.onboarding.lookingFor.lookingForGender} *
                 </label>
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { value: 'male', label: '👨 Men' },
-                    { value: 'female', label: '👩 Women' },
-                    { value: 'both', label: '💕 Both' }
+                    { value: 'male', label: `👨 ${t.onboarding.lookingFor.genderOptions.male}` },
+                    { value: 'female', label: `👩 ${t.onboarding.lookingFor.genderOptions.female}` },
+                    { value: 'both', label: `💕 ${t.onboarding.lookingFor.genderOptions.both}` }
                   ].map((option) => (
                     <button
                       key={option.value}

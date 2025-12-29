@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useState, useEffect, useCallback } from 'react';
+import { useUser, useClerk } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { userApi, getImageUrl } from '@/lib/api';
-import { FaMapMarkerAlt, FaCalendarAlt, FaHeart, FaEdit, FaCheckCircle, FaCrown, FaCamera, FaGlobe, FaStar } from 'react-icons/fa';
+import { socketService } from '@/lib/socket';
+import { FaMapMarkerAlt, FaCalendarAlt, FaHeart, FaEdit, FaCheckCircle, FaCrown, FaCamera, FaGlobe, FaStar, FaSignOutAlt } from 'react-icons/fa';
 import toast from 'react-hot-toast';
+import { useTranslation } from '@/lib/i18n';
 
 interface UserProfile {
   _id: string;
@@ -34,13 +36,55 @@ interface UserProfile {
 
 export default function ProfilePage() {
   const { user: clerkUser, isLoaded } = useUser();
+  const { signOut } = useClerk();
   const router = useRouter();
+  const { t } = useTranslation();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
+  const [signingOut, setSigningOut] = useState(false);
 
   const hasClerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && 
     process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.startsWith('pk_');
+
+  // Custom sign out handler that properly clears all session data
+  const handleSignOut = useCallback(async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+    
+    try {
+      // Disconnect socket first
+      socketService.disconnect();
+      
+      // Clear local storage items related to auth
+      if (typeof window !== 'undefined') {
+        // Clear Clerk-related items
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('clerk') || key.startsWith('__clerk')) {
+            localStorage.removeItem(key);
+          }
+        });
+        
+        // Clear session storage
+        Object.keys(sessionStorage).forEach(key => {
+          if (key.startsWith('clerk') || key.startsWith('__clerk')) {
+            sessionStorage.removeItem(key);
+          }
+        });
+      }
+      
+      // Perform Clerk sign out with redirect
+      await signOut({ redirectUrl: '/' });
+      
+      // Force a hard navigation to clear any cached state
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Error signing out:', error);
+      setSigningOut(false);
+      // Force redirect even on error
+      window.location.href = '/';
+    }
+  }, [signOut, signingOut]);
 
   useEffect(() => {
     async function loadProfile() {
@@ -60,7 +104,7 @@ export default function ProfilePage() {
         if (error.response?.status === 404) {
           router.push('/onboarding');
         } else {
-          toast.error('Failed to load profile');
+          toast.error(t.errors.failedToLoad);
         }
       } finally {
         setLoading(false);
@@ -107,13 +151,13 @@ export default function ProfilePage() {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-sm">
           <FaCheckCircle className="text-xs" />
-          Verified
+          {t.common.verified}
         </span>
       );
     } else if (profile?.photoVerificationStatus === 'pending') {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm">
-          Pending Verification
+          {t.common.pendingVerification}
         </span>
       );
     }
@@ -136,13 +180,13 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 flex items-center justify-center pt-16 md:pt-20 pb-20 md:pb-4">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Profile Not Found</h2>
-          <p className="text-gray-600 mb-6">Please complete your profile to continue.</p>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">{t.profile.notFound}</h2>
+          <p className="text-gray-600 mb-6">{t.profile.notFoundMessage}</p>
           <Link
             href="/onboarding"
             className="px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-full hover:shadow-lg transition-shadow"
           >
-            Create Profile
+            {t.profile.createProfile}
           </Link>
         </div>
       </div>
@@ -215,7 +259,7 @@ export default function ProfilePage() {
               {profile.isPremium && (
                 <span className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-full text-sm font-medium shadow-lg">
                   <FaCrown className="text-xs" />
-                  Premium
+                  {t.common.premium}
                 </span>
               )}
               {getVerificationBadge()}
@@ -252,15 +296,15 @@ export default function ProfilePage() {
             {/* Quick Stats */}
             <div className="grid grid-cols-3 gap-4 py-4 border-t border-gray-100">
               <div className="text-center">
-                <p className="text-sm text-gray-500">Gender</p>
+                <p className="text-sm text-gray-500">{t.onboarding.basic.gender}</p>
                 <p className="font-medium text-gray-800 capitalize">{profile.gender}</p>
               </div>
               <div className="text-center">
-                <p className="text-sm text-gray-500">Looking for</p>
+                <p className="text-sm text-gray-500">{t.profile.details.lookingFor}</p>
                 <p className="font-medium text-gray-800 capitalize">{profile.lookingFor}</p>
               </div>
               <div className="text-center">
-                <p className="text-sm text-gray-500">Member since</p>
+                <p className="text-sm text-gray-500">{t.profile.memberSince}</p>
                 <p className="font-medium text-gray-800">{new Date(profile.createdAt).getFullYear()}</p>
               </div>
             </div>
@@ -272,7 +316,7 @@ export default function ProfilePage() {
           <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
             <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
               <FaHeart className="text-pink-500" />
-              Interests
+              {t.profile.interests}
             </h2>
             <div className="flex flex-wrap gap-2">
               {profile.interests.map((interest, index) => (
@@ -292,7 +336,7 @@ export default function ProfilePage() {
           <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
             <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
               <FaGlobe className="text-purple-500" />
-              Languages
+              {t.profile.languages}
             </h2>
             <div className="flex flex-wrap gap-2">
               {profile.languages.map((language, index) => (
@@ -315,14 +359,14 @@ export default function ProfilePage() {
                 <FaStar className="text-2xl" />
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-lg">Upgrade to Premium</h3>
-                <p className="text-white/90 text-sm">Get unlimited likes, see who likes you, and more!</p>
+                <h3 className="font-bold text-lg">{t.profile.upgradeToPremium}</h3>
+                <p className="text-white/90 text-sm">{t.premium.subtitle}</p>
               </div>
               <Link
                 href="/premium"
                 className="px-4 py-2 bg-white text-orange-500 rounded-full font-medium hover:shadow-lg transition-shadow"
               >
-                Upgrade
+                {t.matches.premiumBanner.upgradeNow}
               </Link>
             </div>
           </div>
@@ -330,18 +374,32 @@ export default function ProfilePage() {
 
         {/* Premium Status */}
         {profile.isPremium && profile.premiumUntil && (
-          <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl shadow-xl p-6 text-white">
+          <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl shadow-xl p-6 text-white mb-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-white/20 rounded-full">
                 <FaCrown className="text-2xl" />
               </div>
               <div>
-                <h3 className="font-bold text-lg">Premium Member</h3>
+                <h3 className="font-bold text-lg">{t.profile.premiumMember}</h3>
                 <p className="text-white/90 text-sm">
-                  Your premium subscription is active until {formatDate(profile.premiumUntil)}
+                  {t.profile.premiumUntil} {formatDate(profile.premiumUntil)}
                 </p>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Sign Out Button - visible on mobile, hidden on desktop (desktop has it in nav) */}
+        {hasClerkKey && (
+          <div className="md:hidden bg-white rounded-2xl shadow-xl p-4 mb-6">
+            <button
+              onClick={handleSignOut}
+              disabled={signingOut}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-50"
+            >
+              <FaSignOutAlt />
+              <span>{signingOut ? t.common.loading : t.common.signOut}</span>
+            </button>
           </div>
         )}
       </div>

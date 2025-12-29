@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ThaiTide - Offline</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #ff6b9d 0%, #ff1744 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: white;
+    }
+    
+    .container {
+      text-align: center;
+      max-width: 400px;
+    }
+    
+    .icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+    }
+    
+    h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    
+    p {
+      font-size: 16px;
+      opacity: 0.9;
+      line-height: 1.6;
+      margin-bottom: 30px;
+    }
+    
+    .status {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 30px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .status-item {
+      font-size: 14px;
+      margin: 8px 0;
+    }
+    
+    .status-label {
+      opacity: 0.8;
+    }
+    
+    .retry-button {
+      background: white;
+      color: #ff6b9d;
+      border: none;
+      padding: 12px 32px;
+      border-radius: 24px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .retry-button:active {
+      transform: scale(0.98);
+    }
+    
+    .retry-button:hover {
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 24px;
+      }
+      
+      p {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">📱</div>
+    <h1>You're Offline</h1>
+    <p>ThaiTide couldn't connect to the internet. Check your connection and try again.</p>
+    
+    <div class="status">
+      <div class="status-item">
+        <span class="status-label">Connection Status:</span>
+        <span id="status">Checking...</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Last Updated:</span>
+        <span id="last-updated">Just now</span>
+      </div>
+    </div>
+    
+    <button class="retry-button" onclick="location.reload()">
+      Try Again
+    </button>
+  </div>
+  
+  <script>
+    // Check connection status
+    function updateStatus() {
+      const online = navigator.onLine;
+      const statusElement = document.getElementById('status');
+      
+      if (online) {
+        statusElement.textContent = '✅ Online (reload page)';
+        statusElement.style.color = '#4ade80';
+      } else {
+        statusElement.textContent = '❌ Offline';
+        statusElement.style.color = '#ff9f43';
+      }
+    }
+    
+    updateStatus();
+    
+    window.addEventListener('online', updateStatus);
+    window.addEventListener('offline', updateStatus);
+    
+    // Update timestamp
+    const now = new Date();
+    document.getElementById('last-updated').textContent = now.toLocaleTimeString();
+  </script>
+</body>
+</html>

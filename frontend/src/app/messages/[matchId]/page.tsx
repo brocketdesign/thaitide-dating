@@ -9,7 +9,6 @@ import { FaPaperPlane, FaArrowLeft, FaCircle } from 'react-icons/fa';
 import { IoMdMale, IoMdFemale } from 'react-icons/io';
 import { HiLocationMarker } from 'react-icons/hi';
 import toast from 'react-hot-toast';
-import Image from 'next/image';
 
 interface Message {
   _id: string;
@@ -92,25 +91,25 @@ export default function MessagesPage() {
 
     // Listen for new messages
     const handleNewMessage = (data: any) => {
-      if (data.matchId === matchId) {
+      if (data.matchId?.toString() === matchId) {
         setMessages((prev) => [...prev, { ...data.message, isNew: true }]);
         
         // Mark the incoming message as read since user is viewing the conversation
-        if (data.message.receiverId === currentUserId) {
+        if (data.message.receiverId?.toString() === currentUserId) {
           socketService.emitMarkAsRead({ matchId, userId: currentUserId });
         }
       }
     };
 
     const handleTyping = (data: any) => {
-      if (data.matchId === matchId && data.userId !== currentUserId) {
+      if (data.matchId?.toString() === matchId && data.userId !== currentUserId) {
         setTyping(true);
         setTimeout(() => setTyping(false), 3000);
       }
     };
 
     const handleMessageSent = (data: any) => {
-      if (data.message) {
+      if (data.message && (data.matchId?.toString() === matchId || data.message.matchId?.toString() === matchId)) {
         // Replace optimistic message with real message from server
         setMessages((prev) =>
           prev.map((msg) =>
@@ -263,11 +262,9 @@ export default function MessagesPage() {
                 <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-r from-pink-400 to-purple-500 p-0.5">
                   <div className="w-full h-full rounded-full overflow-hidden bg-white">
                     {otherUser.profilePhoto ? (
-                      <Image
+                      <img
                         src={getImageUrl(otherUser.profilePhoto)}
                         alt={otherUser.firstName}
-                        width={48}
-                        height={48}
                         className="w-full h-full object-cover"
                       />
                     ) : (

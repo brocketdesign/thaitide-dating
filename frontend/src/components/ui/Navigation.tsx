@@ -2,18 +2,62 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { UserButton, useUser } from '@clerk/nextjs';
-import { FaHeart, FaComments, FaUser, FaStar, FaEnvelope } from 'react-icons/fa';
+import { usePathname, useRouter } from 'next/navigation';
+import { useUser, useClerk } from '@clerk/nextjs';
+import { FaHeart, FaComments, FaUser, FaStar, FaEnvelope, FaSignOutAlt } from 'react-icons/fa';
 import { messageApi, userApi } from '@/lib/api';
 import { socketService } from '@/lib/socket';
+import { useTranslation } from '@/lib/i18n';
+import { LanguageSwitcherCompact } from './LanguageSwitcher';
 import toast from 'react-hot-toast';
 
 export default function Navigation() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user: clerkUser, isLoaded } = useUser();
+  const { signOut } = useClerk();
+  const { t } = useTranslation();
   const [unreadCount, setUnreadCount] = useState(0);
   const [dbUserId, setDbUserId] = useState<string | null>(null);
+
+  // Custom sign out handler that properly clears all session data
+  const handleSignOut = useCallback(async () => {
+    try {
+      // Disconnect socket first
+      socketService.disconnect();
+      
+      // Clear any cached user data
+      setDbUserId(null);
+      setUnreadCount(0);
+      
+      // Clear local storage items related to auth
+      if (typeof window !== 'undefined') {
+        // Clear Clerk-related items
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('clerk') || key.startsWith('__clerk')) {
+            localStorage.removeItem(key);
+          }
+        });
+        
+        // Clear session storage
+        Object.keys(sessionStorage).forEach(key => {
+          if (key.startsWith('clerk') || key.startsWith('__clerk')) {
+            sessionStorage.removeItem(key);
+          }
+        });
+      }
+      
+      // Perform Clerk sign out with redirect
+      await signOut({ redirectUrl: '/' });
+      
+      // Force a hard navigation to clear any cached state
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Error signing out:', error);
+      // Force redirect even on error
+      window.location.href = '/';
+    }
+  }, [signOut]);
 
   const isActive = (path: string) => {
     if (path === '/profile') {
@@ -99,11 +143,11 @@ export default function Navigation() {
   }, [dbUserId, pathname, fetchUnreadCount]);
 
   const navItems = [
-    { path: '/discover', icon: <FaHeart />, label: 'Discover' },
-    { path: '/matches', icon: <FaComments />, label: 'Connections' },
-    { path: '/messages', icon: <FaEnvelope />, label: 'Messages', badge: unreadCount },
-    { path: '/profile', icon: <FaUser />, label: 'Profile' },
-    { path: '/premium', icon: <FaStar />, label: 'Premium' },
+    { path: '/discover', icon: <FaHeart />, label: t.nav.discover },
+    { path: '/matches', icon: <FaComments />, label: t.nav.connections },
+    { path: '/messages', icon: <FaEnvelope />, label: t.nav.messages, badge: unreadCount },
+    { path: '/profile', icon: <FaUser />, label: t.nav.profile },
+    { path: '/premium', icon: <FaStar />, label: t.nav.premium },
   ];
 
   const hasClerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && 
@@ -151,9 +195,17 @@ export default function Navigation() {
           </div>
 
           {/* User Button - hidden on mobile */}
-          <div className="hidden md:block">
+          <div className="hidden md:flex items-center gap-2">
+            <LanguageSwitcherCompact />
             {hasClerkKey ? (
-              <UserButton afterSignOutUrl="/" />
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-1 px-3 py-2 text-sm text-gray-600 hover:text-pink-500 hover:bg-pink-50 rounded-lg transition-colors"
+                title={t.common.signOut}
+              >
+                <FaSignOutAlt />
+                <span className="hidden lg:inline">{t.common.signOut}</span>
+              </button>
             ) : (
               <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
                 <FaUser className="text-gray-500 text-sm" />

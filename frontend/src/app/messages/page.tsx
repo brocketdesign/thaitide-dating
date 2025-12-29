@@ -7,6 +7,7 @@ import { messageApi, userApi, getImageUrl } from '@/lib/api';
 import { socketService } from '@/lib/socket';
 import { FaCircle } from 'react-icons/fa';
 import toast from 'react-hot-toast';
+import { useTranslation } from '@/lib/i18n';
 
 interface Conversation {
   matchId: string;
@@ -33,6 +34,7 @@ interface Conversation {
 export default function MessagesListPage() {
   const router = useRouter();
   const { user: clerkUser, isLoaded } = useUser();
+  const { t } = useTranslation();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [dbUserId, setDbUserId] = useState<string | null>(null);
@@ -61,7 +63,7 @@ export default function MessagesListPage() {
         await fetchConversations(userId);
       } catch (error) {
         console.error('Error loading conversations:', error);
-        toast.error('Failed to load messages');
+        toast.error(t.errors.failedToLoad);
       } finally {
         setLoading(false);
       }
@@ -77,9 +79,10 @@ export default function MessagesListPage() {
     // Handle new messages - update conversation list in real-time
     const handleNewMessage = (data: any) => {
       setConversations(prevConversations => {
-        // Find the conversation for this match
+        // Find the conversation for this match - ensure string comparison
+        const messageMatchId = data.matchId?.toString();
         const conversationIndex = prevConversations.findIndex(
-          conv => conv.matchId === data.matchId
+          conv => conv.matchId.toString() === messageMatchId
         );
 
         if (conversationIndex === -1) {
@@ -96,12 +99,12 @@ export default function MessagesListPage() {
         conversation.lastMessage = {
           content: data.message.content,
           createdAt: data.message.createdAt,
-          isFromMe: data.message.senderId === dbUserId,
+          isFromMe: data.message.senderId?.toString() === dbUserId,
           read: data.message.read || false
         };
 
         // Increment unread count if message is not from current user
-        if (data.message.senderId !== dbUserId) {
+        if (data.message.senderId?.toString() !== dbUserId) {
           conversation.unreadCount = (conversation.unreadCount || 0) + 1;
         }
 
@@ -120,12 +123,21 @@ export default function MessagesListPage() {
 
     // Handle message sent confirmation - update conversation list
     const handleMessageSent = (data: any) => {
+      if (!data.message) return;
+      
+      // The matchId is stored inside the message object
+      const messageMatchId = data.message.matchId?.toString() || data.matchId;
+      
       setConversations(prevConversations => {
         const conversationIndex = prevConversations.findIndex(
-          conv => conv.matchId === data.message.matchId
+          conv => conv.matchId.toString() === messageMatchId
         );
 
-        if (conversationIndex === -1) return prevConversations;
+        if (conversationIndex === -1) {
+          // Conversation not found - refetch to get updated list
+          fetchConversations(dbUserId!);
+          return prevConversations;
+        }
 
         const updatedConversations = [...prevConversations];
         const conversation = { ...updatedConversations[conversationIndex] };
@@ -157,7 +169,7 @@ export default function MessagesListPage() {
     const handleConversationRead = (data: { matchId: string; unreadCount: number }) => {
       setConversations(prevConversations => {
         const conversationIndex = prevConversations.findIndex(
-          conv => conv.matchId === data.matchId
+          conv => conv.matchId.toString() === data.matchId?.toString()
         );
 
         if (conversationIndex === -1) return prevConversations;
@@ -189,7 +201,7 @@ export default function MessagesListPage() {
     if (diffInHours < 24) {
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } else if (diffInHours < 48) {
-      return 'Yesterday';
+      return t.common.yesterday;
     } else {
       return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
     }
@@ -205,7 +217,7 @@ export default function MessagesListPage() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 via-white to-purple-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-pink-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading messages...</p>
+          <p className="text-gray-600">{t.common.loading}</p>
         </div>
       </div>
     );
@@ -215,21 +227,21 @@ export default function MessagesListPage() {
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 py-8 px-4">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 mb-8">
-          Messages
+          {t.messages.title}
         </h1>
 
         {conversations.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
             <div className="text-6xl mb-4">💬</div>
-            <h3 className="text-2xl font-bold mb-2">No messages yet</h3>
+            <h3 className="text-2xl font-bold mb-2">{t.messages.noConversations}</h3>
             <p className="text-gray-600 mb-6">
-              Match with someone to start chatting!
+              {t.messages.noConversationsMessage}
             </p>
             <button
               onClick={() => router.push('/discover')}
               className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold"
             >
-              Start Discovering
+              {t.messages.startMatching}
             </button>
           </div>
         ) : (
@@ -279,13 +291,13 @@ export default function MessagesListPage() {
                   {conversation.lastMessage ? (
                     <p className={`text-sm truncate ${conversation.unreadCount > 0 ? 'text-gray-800 font-medium' : 'text-gray-500'}`}>
                       {conversation.lastMessage.isFromMe && (
-                        <span className="text-gray-400">You: </span>
+                        <span className="text-gray-400">{t.messages.you}: </span>
                       )}
                       {truncateMessage(conversation.lastMessage.content)}
                     </p>
                   ) : (
                     <p className="text-sm text-gray-400 italic">
-                      No messages yet - say hi! 👋
+                      {t.messages.startConversation} 👋
                     </p>
                   )}
                 </div>
