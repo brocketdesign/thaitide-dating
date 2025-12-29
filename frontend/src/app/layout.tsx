@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ClerkProvider } from '@clerk/nextjs';
 import { Toaster } from 'react-hot-toast';
 import Navigation from '@/components/ui/Navigation';
+import AdminDebugMenu from '@/components/ui/AdminDebugMenu';
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -24,6 +25,7 @@ export default function RootLayout({
           <ClerkProvider>
             <Navigation />
             <Toaster position="top-right" />
+            <AdminDebugMenu />
             <div className="md:pt-16 pb-16 md:pb-0">
               {children}
             </div>
@@ -32,6 +34,7 @@ export default function RootLayout({
           <>
             <Navigation />
             <Toaster position="top-right" />
+            <AdminDebugMenu />
             <div className="md:pt-16 pb-16 md:pb-0">
               {children}
             </div>

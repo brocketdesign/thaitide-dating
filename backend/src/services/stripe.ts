@@ -1,10 +1,11 @@
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2025-12-15.clover'
-});
+}) : null;
 
 export const createCustomer = async (email: string, userId: string) => {
+  if (!stripe) throw new Error('Stripe not configured');
   return await stripe.customers.create({
     email,
     metadata: { userId }
@@ -15,6 +16,7 @@ export const createSubscription = async (
   customerId: string,
   priceId: string
 ) => {
+  if (!stripe) throw new Error('Stripe not configured');
   return await stripe.subscriptions.create({
     customer: customerId,
     items: [{ price: priceId }],
@@ -25,6 +27,7 @@ export const createSubscription = async (
 };
 
 export const cancelSubscription = async (subscriptionId: string) => {
+  if (!stripe) throw new Error('Stripe not configured');
   return await stripe.subscriptions.cancel(subscriptionId);
 };
 
@@ -33,6 +36,7 @@ export const constructEvent = (
   signature: string,
   secret: string
 ) => {
+  if (!stripe) throw new Error('Stripe not configured');
   return stripe.webhooks.constructEvent(payload, signature, secret);
 };
 

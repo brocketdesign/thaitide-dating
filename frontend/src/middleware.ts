@@ -1,10 +1,20 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
 
 const isPublicRoute = createRouteMatcher([
   '/',
   '/sign-in(.*)',
   '/sign-up(.*)',
   '/api/webhooks(.*)'
+]);
+
+const isAuthRoute = createRouteMatcher([
+  '/sign-in(.*)',
+  '/sign-up(.*)',
+]);
+
+const isOnboardingRoute = createRouteMatcher([
+  '/onboarding(.*)'
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
@@ -16,7 +26,23 @@ export default clerkMiddleware(async (auth, request) => {
     return;
   }
 
-  if (!isPublicRoute(request)) {
+  const { userId } = await auth();
+  const { pathname } = request.nextUrl;
+
+  // Redirect authenticated users from landing page or auth pages to discover
+  // (discover page will check if profile exists and redirect to onboarding if needed)
+  if (userId && (pathname === '/' || isAuthRoute(request))) {
+    const discoverUrl = new URL('/auth-redirect', request.url);
+    return NextResponse.redirect(discoverUrl);
+  }
+
+  // Protect non-public routes (except onboarding which needs auth)
+  if (!isPublicRoute(request) && !isOnboardingRoute(request)) {
+    await auth.protect();
+  }
+
+  // Protect onboarding route
+  if (isOnboardingRoute(request)) {
     await auth.protect();
   }
 });

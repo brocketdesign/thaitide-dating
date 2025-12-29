@@ -21,6 +21,10 @@ class SocketService {
     return this.socket;
   }
 
+  getSocket() {
+    return this.socket;
+  }
+
   disconnect() {
     if (this.socket) {
       this.socket.disconnect();
@@ -49,8 +53,24 @@ class SocketService {
     this.socket?.on('user_typing', callback);
   }
 
+  onMessageNotification(callback: (data: any) => void) {
+    this.socket?.on('message_notification', callback);
+  }
+
+  onUnreadCountUpdate(callback: (data: { unreadCount: number }) => void) {
+    this.socket?.on('unread_count_update', callback);
+  }
+
+  onConversationRead(callback: (data: { matchId: string; unreadCount: number }) => void) {
+    this.socket?.on('conversation_read', callback);
+  }
+
   emitTyping(data: { matchId: string; userId: string; receiverId: string }) {
     this.socket?.emit('typing', data);
+  }
+
+  emitMarkAsRead(data: { matchId: string; userId: string }) {
+    this.socket?.emit('mark_as_read', data);
   }
 
   removeListener(event: string, callback?: any) {

@@ -19,14 +19,27 @@ export interface IUser extends Document {
   };
   languages: string[];
   interests: string[];
+  // Physical attributes
+  height?: number; // in cm
+  weight?: number; // in kg
+  // Profile information
+  education?: 'high-school' | 'bachelor' | 'master' | 'phd' | 'other';
+  englishAbility?: 'beginner' | 'intermediate' | 'fluent' | 'native';
+  // Family preferences
+  noChildren?: 'yes' | 'no' | 'any';
+  wantsChildren?: 'yes' | 'no' | 'any';
+  // Visibility and status
+  lastActiveAt?: Date;
   verified: boolean;
   photoVerificationStatus: 'pending' | 'verified' | 'rejected';
   isPremium: boolean;
   premiumUntil?: Date;
   visibility: number; // boosted visibility score
+  // Interactions
   likes: Schema.Types.ObjectId[];
   dislikes: Schema.Types.ObjectId[];
   matches: Schema.Types.ObjectId[];
+  profileVisitors: { visitorId: Schema.Types.ObjectId; visitedAt: Date }[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -51,6 +64,31 @@ const userSchema = new Schema<IUser>(
     },
     languages: [{ type: String }],
     interests: [{ type: String }],
+    // Physical attributes
+    height: { type: Number }, // in cm
+    weight: { type: Number }, // in kg
+    // Profile information
+    education: { 
+      type: String, 
+      enum: ['high-school', 'bachelor', 'master', 'phd', 'other']
+    },
+    englishAbility: { 
+      type: String, 
+      enum: ['beginner', 'intermediate', 'fluent', 'native']
+    },
+    // Family preferences
+    noChildren: { 
+      type: String, 
+      enum: ['yes', 'no', 'any'],
+      default: 'any'
+    },
+    wantsChildren: { 
+      type: String, 
+      enum: ['yes', 'no', 'any'],
+      default: 'any'
+    },
+    // Visibility and status
+    lastActiveAt: { type: Date },
     verified: { type: Boolean, default: false },
     photoVerificationStatus: { 
       type: String, 
@@ -62,7 +100,11 @@ const userSchema = new Schema<IUser>(
     visibility: { type: Number, default: 0 },
     likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     dislikes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-    matches: [{ type: Schema.Types.ObjectId, ref: 'User' }]
+    matches: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    profileVisitors: [{
+      visitorId: { type: Schema.Types.ObjectId, ref: 'User' },
+      visitedAt: { type: Date, default: Date.now }
+    }]
   },
   { timestamps: true }
 );
