@@ -9,6 +9,7 @@ import { FaPaperPlane, FaArrowLeft, FaCircle, FaRobot } from 'react-icons/fa';
 import { IoMdMale, IoMdFemale } from 'react-icons/io';
 import { HiLocationMarker } from 'react-icons/hi';
 import toast from 'react-hot-toast';
+import PremiumMessageModal from '@/components/ui/PremiumMessageModal';
 
 interface Message {
   _id: string;
@@ -36,6 +37,11 @@ interface OtherUser {
   isAI?: boolean; // If this is an AI profile
 }
 
+const COUNTDOWN_DURATION = 10 * 60; // 10 minutes in seconds
+const COUNTDOWN_STORAGE_KEY = 'thaitide_global_message_countdown'; // Global countdown across all chats
+const HAS_SENT_MESSAGE_KEY = 'thaitide_has_sent_first_message'; // Track if user has ever sent a message
+const DRAFT_STORAGE_KEY_PREFIX = 'thaitide_message_draft_'; // Prefix for draft messages per chat
+
 export default function MessagesPage() {
   const params = useParams();
   const router = useRouter();
@@ -48,8 +54,65 @@ export default function MessagesPage() {
   const [sending, setSending] = useState(false);
   const [otherUser, setOtherUser] = useState<OtherUser | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string>('');
+  const [userMessageCount, setUserMessageCount] = useState(0);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const [isPremiumUser, setIsPremiumUser] = useState(false);
+  const [countdown, setCountdown] = useState(COUNTDOWN_DURATION);
+  const [pendingMessage, setPendingMessage] = useState('');
+  const [hasSentFirstMessage, setHasSentFirstMessage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Initialize global countdown timer from localStorage
+  useEffect(() => {
+    // Check if user has sent their first message ever
+    const hasSent = localStorage.getItem(HAS_SENT_MESSAGE_KEY) === 'true';
+    setHasSentFirstMessage(hasSent);
+    
+    // Load global countdown
+    const savedEndTime = localStorage.getItem(COUNTDOWN_STORAGE_KEY);
+    
+    if (savedEndTime) {
+      const endTime = parseInt(savedEndTime, 10);
+      const now = Date.now();
+      const remainingSeconds = Math.max(0, Math.floor((endTime - now) / 1000));
+      setCountdown(remainingSeconds);
+    } else if (!hasSent) {
+      // No countdown running and user hasn't sent first message yet - no countdown needed
+      setCountdown(0);
+    }
+  }, []);
+
+  // Countdown timer tick
+  useEffect(() => {
+    if (countdown <= 0 || isPremiumUser) return;
+
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [countdown, isPremiumUser]);
+
+  // Start global countdown
+  const startGlobalCountdown = () => {
+    const endTime = Date.now() + COUNTDOWN_DURATION * 1000;
+    localStorage.setItem(COUNTDOWN_STORAGE_KEY, endTime.toString());
+    localStorage.setItem(HAS_SENT_MESSAGE_KEY, 'true');
+    setHasSentFirstMessage(true);
+    setCountdown(COUNTDOWN_DURATION);
+  };
+
+  // Reset countdown after user sends a message when timer reached 0
+  const resetCountdownAfterSend = () => {
+    startGlobalCountdown();
+  };
 
   useEffect(() => {
     async function init() {
@@ -59,7 +122,13 @@ export default function MessagesPage() {
         // Get the database user ID from Clerk ID
         const profileResponse = await userApi.getProfileByClerkId(clerkUser.id);
         const dbUserId = profileResponse.data.user._id;
+        const userProfile = profileResponse.data.user;
         setCurrentUserId(dbUserId);
+        
+        // Check if user has premium subscription
+        if (userProfile.subscription?.status === 'active') {
+          setIsPremiumUser(true);
+        }
         
         // Store in localStorage for consistency
         localStorage.setItem('userId', dbUserId);
@@ -138,11 +207,45 @@ export default function MessagesPage() {
     scrollToBottom();
   }, [messages]);
 
+  // Load draft message from localStorage on mount
+  useEffect(() => {
+    if (!matchId) return;
+    const savedDraft = localStorage.getItem(`${DRAFT_STORAGE_KEY_PREFIX}${matchId}`);
+    if (savedDraft) {
+      setNewMessage(savedDraft);
+    }
+  }, [matchId]);
+
+  // Save draft message to localStorage when input changes (debounced)
+  useEffect(() => {
+    if (!matchId) return;
+    
+    const timeoutId = setTimeout(() => {
+      if (newMessage.trim()) {
+        localStorage.setItem(`${DRAFT_STORAGE_KEY_PREFIX}${matchId}`, newMessage);
+      } else {
+        localStorage.removeItem(`${DRAFT_STORAGE_KEY_PREFIX}${matchId}`);
+      }
+    }, 300); // Debounce 300ms
+
+    return () => clearTimeout(timeoutId);
+  }, [newMessage, matchId]);
+
   const loadMessages = async () => {
     try {
       setLoading(true);
       const response = await messageApi.getMessages(matchId);
-      setMessages(response.data.messages);
+      const loadedMessages = response.data.messages;
+      setMessages(loadedMessages);
+      
+      // Count messages sent by current user in this conversation
+      if (currentUserId) {
+        const sentByCurrentUser = loadedMessages.filter(
+          (msg: Message) => msg.senderId === currentUserId || 
+            (typeof msg.senderId === 'object' && (msg.senderId as any)?._id === currentUserId)
+        ).length;
+        setUserMessageCount(sentByCurrentUser);
+      }
       
       // Mark all messages in this conversation as read via socket for real-time badge update
       if (currentUserId) {
@@ -159,12 +262,42 @@ export default function MessagesPage() {
     e.preventDefault();
     if (!newMessage.trim() || sending) return;
 
+    // For non-premium users: check global countdown
+    // If user has already sent a message before (hasSentFirstMessage) and countdown is running, show modal
+    if (!isPremiumUser && hasSentFirstMessage && countdown > 0) {
+      setPendingMessage(newMessage.trim());
+      setShowPremiumModal(true);
+      return;
+    }
+
+    await doSendMessage(newMessage.trim());
+  };
+
+  // Handle sending from modal when countdown reaches 0
+  const handleSendFromModal = async () => {
+    if (pendingMessage) {
+      await doSendMessage(pendingMessage);
+      setPendingMessage('');
+      setShowPremiumModal(false);
+    } else if (newMessage.trim()) {
+      await doSendMessage(newMessage.trim());
+      setShowPremiumModal(false);
+    }
+  };
+
+  const doSendMessage = async (messageContent: string) => {
+    if (!messageContent || sending) return;
+
     const receiverId = otherUser?._id || 'receiver-id';
-    const messageContent = newMessage.trim();
     
-    // Clear input immediately for better UX
+    // Clear input and draft immediately for better UX
     setNewMessage('');
+    localStorage.removeItem(`${DRAFT_STORAGE_KEY_PREFIX}${matchId}`);
     setSending(true);
+
+    // Check if this is the very first message ever (globally) or after countdown finished
+    const isVeryFirstMessage = !hasSentFirstMessage;
+    const isAfterCountdown = hasSentFirstMessage && countdown === 0;
 
     // Optimistic update - add message immediately with animation
     const optimisticMessage: Message = {
@@ -178,6 +311,7 @@ export default function MessagesPage() {
     };
     
     setMessages(prev => [...prev, optimisticMessage]);
+    setUserMessageCount(prev => prev + 1);
 
     try {
       socketService.sendMessage({
@@ -186,11 +320,21 @@ export default function MessagesPage() {
         receiverId,
         content: messageContent
       });
+      
+      // Start or reset global countdown for non-premium users
+      if (!isPremiumUser) {
+        if (isVeryFirstMessage || isAfterCountdown) {
+          // Start/restart global countdown after sending a message
+          startGlobalCountdown();
+        }
+      }
+      
       // The message_sent event handler will replace the temp message with the real one from the server
     } catch (error) {
       toast.error('Failed to send message');
-      // Remove optimistic message on error
+      // Remove optimistic message on error and revert counter
       setMessages(prev => prev.filter(msg => msg._id !== optimisticMessage._id));
+      setUserMessageCount(prev => prev - 1);
     } finally {
       setSending(false);
       inputRef.current?.focus();
@@ -463,6 +607,22 @@ export default function MessagesPage() {
           padding-bottom: max(1rem, env(safe-area-inset-bottom));
         }
       `}</style>
+
+      {/* Premium Message Modal */}
+      {otherUser && (
+        <PremiumMessageModal
+          isOpen={showPremiumModal}
+          onClose={() => {
+            setShowPremiumModal(false);
+            setPendingMessage('');
+          }}
+          otherUser={otherUser}
+          subscriptionPrice="$9.99"
+          countdown={countdown}
+          canSendMessage={countdown === 0}
+          onSendNow={handleSendFromModal}
+        />
+      )}
     </div>
   );
 }

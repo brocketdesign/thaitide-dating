@@ -420,6 +420,23 @@ export default function DiscoverPage() {
   const [matchedUser, setMatchedUser] = useState<User | null>(null);
   const [matchId, setMatchId] = useState<string>('');
 
+  // Load view mode preference from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedViewMode = localStorage.getItem('discoverViewMode') as 'card' | 'grid' | null;
+      if (savedViewMode) {
+        setViewMode(savedViewMode);
+      }
+    }
+  }, []);
+
+  // Save view mode preference to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('discoverViewMode', viewMode);
+    }
+  }, [viewMode]);
+
   // Check if user has completed profile
   useEffect(() => {
     async function checkProfile() {

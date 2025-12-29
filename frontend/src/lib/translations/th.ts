@@ -343,6 +343,21 @@ export const th: Translations = {
     keepSwiping: 'ปัดต่อ',
   },
   
+  // Premium Message Modal
+  premiumMessage: {
+    messageLimit: 'ถึงขีดจำกัดข้อความแล้ว',
+    messageIn: 'ส่งข้อความหา {username} ใน',
+    or: 'หรือ',
+    month: 'เดือน',
+    cancelAnytime: 'ยกเลิกได้ทุกเมื่อ',
+    subscribe: 'สมัครพรีเมียม',
+    unlimitedMessages: 'ข้อความไม่จำกัด',
+    noWaiting: 'ไม่ต้องรอ',
+    securePayment: 'ชำระเงินปลอดภัยโดย',
+    readyToMessage: 'พร้อมส่งข้อความหา',
+    sendNow: 'ส่งข้อความเลย',
+  },
+  
   // PWA Installer
   pwa: {
     installTitle: 'ติดตั้ง ThaiTide',

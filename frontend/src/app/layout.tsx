@@ -69,6 +69,8 @@ export default function RootLayout({
               <PWAInstaller />
               <div className="md:pt-16 pb-16 md:pb-0">
                 {children}
+                <div className="md:pt-16 pb-16 md:pb-0">
+                  {children}
               </div>
             </>
           )}

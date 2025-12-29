@@ -329,6 +329,21 @@ export interface Translations {
     keepSwiping: string;
   };
   
+  // Premium Message Modal
+  premiumMessage?: {
+    messageLimit: string;
+    messageIn: string;
+    or: string;
+    month: string;
+    cancelAnytime: string;
+    subscribe: string;
+    unlimitedMessages: string;
+    noWaiting: string;
+    securePayment: string;
+    readyToMessage: string;
+    sendNow: string;
+  };
+  
   // PWA Installer
   pwa: {
     installTitle: string;
