@@ -1,11 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { ClerkProvider } from '@clerk/nextjs';
-import dynamic from 'next/dynamic';
-import { Toaster } from 'react-hot-toast';
-const Navigation = dynamic(() => import('@/components/ui/Navigation'), { ssr: false });
-const AdminDebugMenu = dynamic(() => import('@/components/ui/AdminDebugMenu'), { ssr: false });
-import PWAInstaller from '@/components/ui/PWAInstaller';
 import Providers from '@/components/Providers';
+import ClientLayout from '@/components/ClientLayout';
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -36,9 +31,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const hasClerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && 
-    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.startsWith('pk_');
-
   return (
     <html lang="en">
       <head>
@@ -52,27 +44,9 @@ export default function RootLayout({
       </head>
       <body className="antialiased font-sans">
         <Providers>
-          {hasClerkKey ? (
-            <ClerkProvider>
-              <Navigation />
-              <Toaster position="top-right" />
-              <AdminDebugMenu />
-              <PWAInstaller />
-              <div className="md:pt-16 pb-16 md:pb-0">
-                {children}
-              </div>
-            </ClerkProvider>
-          ) : (
-            <>
-              <Navigation />
-              <Toaster position="top-right" />
-              <AdminDebugMenu />
-              <PWAInstaller />
-                <div className="md:pt-16 pb-16 md:pb-0">
-                  {children}
-              </div>
-            </>
-          )}
+          <ClientLayout>
+            {children}
+          </ClientLayout>
         </Providers>
         <ServiceWorkerRegister />
       </body>
