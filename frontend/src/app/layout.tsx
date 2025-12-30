@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from '@clerk/nextjs';
+import dynamic from 'next/dynamic';
 import { Toaster } from 'react-hot-toast';
-import Navigation from '@/components/ui/Navigation';
-import AdminDebugMenu from '@/components/ui/AdminDebugMenu';
+const Navigation = dynamic(() => import('@/components/ui/Navigation'), { ssr: false });
+const AdminDebugMenu = dynamic(() => import('@/components/ui/AdminDebugMenu'), { ssr: false });
 import PWAInstaller from '@/components/ui/PWAInstaller';
 import Providers from '@/components/Providers';
 import "./globals.css";
