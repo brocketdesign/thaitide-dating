@@ -311,7 +311,7 @@ export const getLikedProfiles = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
 
-    const user = await User.findById(userId).populate('likes', 'firstName lastName profilePhoto location dateOfBirth');
+    const user = await User.findById(userId).populate('likes', 'username profilePhoto location dateOfBirth');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -337,15 +337,14 @@ export const getWhoLikedMe = async (req: Request, res: Response) => {
     const usersWhoLikedMe = await User.find({
       likes: userId,
       _id: { $nin: user.matches } // Exclude already matched users
-    } as any).select('firstName lastName profilePhoto location dateOfBirth isPremium');
+    } as any).select('username profilePhoto location dateOfBirth isPremium');
 
     // If user is not premium, blur the results (only show count or limited info)
     if (!user.isPremium) {
       res.json({ 
         profiles: usersWhoLikedMe.map(u => ({
           _id: u._id,
-          firstName: '???',
-          lastName: '',
+          username: '???',
           profilePhoto: u.profilePhoto,
           location: u.location,
           isBlurred: true
@@ -382,15 +381,14 @@ export const getProfileVisitors = async (req: Request, res: Response) => {
 
     const visitors = await User.find({
       _id: { $in: uniqueVisitorIds }
-    }).select('firstName lastName profilePhoto location dateOfBirth');
+    }).select('username profilePhoto location dateOfBirth');
 
     // If user is not premium, blur the results
     if (!user.isPremium) {
       res.json({ 
         profiles: visitors.map(v => ({
           _id: v._id,
-          firstName: '???',
-          lastName: '',
+          username: '???',
           profilePhoto: v.profilePhoto,
           location: v.location,
           isBlurred: true
@@ -449,8 +447,8 @@ export const getMatchDetails = async (req: Request, res: Response) => {
     const { currentUserId } = req.query;
 
     const match = await Match.findById(matchId)
-      .populate('user1', 'firstName lastName profilePhoto dateOfBirth gender location updatedAt isAI bio interests')
-      .populate('user2', 'firstName lastName profilePhoto dateOfBirth gender location updatedAt isAI bio interests');
+      .populate('user1', 'username profilePhoto dateOfBirth gender location updatedAt isAI bio interests')
+      .populate('user2', 'username profilePhoto dateOfBirth gender location updatedAt isAI bio interests');
 
     if (!match) {
       return res.status(404).json({ message: 'Match not found' });
@@ -485,8 +483,7 @@ export const getMatchDetails = async (req: Request, res: Response) => {
       },
       otherUser: {
         _id: otherUser._id,
-        firstName: otherUser.firstName,
-        lastName: otherUser.lastName,
+        username: otherUser.username,
         profilePhoto: otherUser.profilePhoto,
         age: calculateAge(otherUser.dateOfBirth),
         gender: otherUser.gender,
@@ -498,8 +495,7 @@ export const getMatchDetails = async (req: Request, res: Response) => {
       },
       currentUser: {
         _id: currentUser._id,
-        firstName: currentUser.firstName,
-        lastName: currentUser.lastName
+        username: currentUser.username
       }
     });
   } catch (error) {

@@ -80,6 +80,7 @@ export const th: Translations = {
   // Discover page
   discover: {
     title: 'ค้นหา',
+    searchByUsername: 'ค้นหาตามชื่อผู้ใช้...',
     noMoreProfiles: 'ไม่มีโปรไฟล์เพิ่มเติม',
     noMoreProfilesMessage: 'คุณได้ดูทุกคนในพื้นที่ของคุณแล้ว!',
     adjustFilters: 'ปรับตัวกรอง',
@@ -240,8 +241,8 @@ export const th: Translations = {
     },
     basic: {
       title: 'ข้อมูลพื้นฐาน',
-      firstName: 'ชื่อจริง',
-      lastName: 'นามสกุล',
+      username: 'ชื่อผู้ใช้',
+      usernamePlaceholder: 'เลือกชื่อผู้ใช้ที่ไม่ซ้ำ',
       dateOfBirth: 'วันเกิด',
       gender: 'เพศ',
       genderOptions: {

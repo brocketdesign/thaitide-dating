@@ -13,8 +13,7 @@ interface Conversation {
   matchId: string;
   user: {
     _id: string;
-    firstName: string;
-    lastName: string;
+    username: string;
     profilePhoto?: string;
     location?: {
       city?: string;
@@ -259,7 +258,7 @@ export default function MessagesListPage() {
                     {conversation.user.profilePhoto ? (
                       <img
                         src={getImageUrl(conversation.user.profilePhoto)}
-                        alt={conversation.user.firstName}
+                        alt={conversation.user.username}
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -282,7 +281,7 @@ export default function MessagesListPage() {
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2">
                       <h3 className={`font-semibold text-gray-800 ${conversation.unreadCount > 0 ? 'font-bold' : ''}`}>
-                        {conversation.user.firstName} {conversation.user.lastName}
+                        @{conversation.user.username}
                       </h3>
                       {conversation.user.isAI && (
                         <span className="flex items-center gap-0.5 px-1.5 py-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-[10px] rounded-full font-medium">

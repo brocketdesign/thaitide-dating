@@ -12,7 +12,7 @@ interface PremiumMessageModalProps {
   onClose: () => void;
   otherUser: {
     _id: string;
-    firstName: string;
+    username: string;
     profilePhoto?: string;
   };
   subscriptionPrice?: string;
@@ -119,12 +119,12 @@ export default function PremiumMessageModal({
                   {otherUser.profilePhoto ? (
                     <img
                       src={getImageUrl(otherUser.profilePhoto)}
-                      alt={otherUser.firstName}
+                      alt={otherUser.username}
                       className="w-full h-full object-cover"
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center text-white text-2xl font-bold">
-                      {otherUser.firstName.charAt(0)}
+                      {otherUser.username.charAt(0).toUpperCase()}
                     </div>
                   )}
                 </div>
@@ -148,7 +148,7 @@ export default function PremiumMessageModal({
                 </div>
               </div>
               <p className="text-gray-700 text-lg mb-2">
-                {t.premiumMessage?.readyToMessage || 'Ready to message'} {otherUser.firstName}!
+                {t.premiumMessage?.readyToMessage || 'Ready to message'} @{otherUser.username}!
               </p>
               <button
                 onClick={handleSendNow}
@@ -160,7 +160,7 @@ export default function PremiumMessageModal({
           ) : (
             <>
               <p className="text-gray-700 text-lg mb-2">
-                {(t.premiumMessage?.messageIn || 'Message {username} in').replace('{username}', otherUser.firstName)}
+                {(t.premiumMessage?.messageIn || 'Message @{username} in').replace('{username}', otherUser.username)}
               </p>
               
               {/* Countdown Timer */}

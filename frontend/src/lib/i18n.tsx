@@ -90,6 +90,7 @@ export interface Translations {
     noMoreProfilesMessage: string;
     adjustFilters: string;
     checkBackLater: string;
+    searchByUsername: string;
     filters: {
       title: string;
       ageRange: string;
@@ -231,8 +232,8 @@ export interface Translations {
     };
     basic: {
       title: string;
-      firstName: string;
-      lastName: string;
+      username: string;
+      usernamePlaceholder?: string;
       dateOfBirth: string;
       gender: string;
       genderOptions: {

@@ -100,7 +100,7 @@ router.delete('/reset-onboarding/:clerkId', async (req: Request, res: Response) 
 
     res.json({
       success: true,
-      message: `Profile deleted for ${user.firstName}. Onboarding will restart on next page load.`
+      message: `Profile deleted for @${user.username}. Onboarding will restart on next page load.`
     });
   } catch (error) {
     console.error('Error resetting onboarding:', error);
@@ -205,15 +205,14 @@ router.post('/generate-ai-profile', async (req: Request, res: Response) => {
     const user = new User(profileData);
     await user.save();
     
-    console.log(`✅ AI profile created: ${user.firstName} ${user.lastName}`);
+    console.log(`✅ AI profile created: @${user.username}`);
 
     res.json({
       success: true,
-      message: `AI profile created: ${user.firstName} ${user.lastName}`,
+      message: `AI profile created: @${user.username}`,
       profile: {
         id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        username: user.username,
         gender: user.gender,
         city: user.location.city,
         bio: user.bio,

@@ -16,8 +16,7 @@ const thaiLocations = [
 ];
 
 interface GeneratedProfile {
-  firstName: string;
-  lastName: string;
+  username: string;
   bio: string;
   interests: string[];
   languages: string[];
@@ -55,8 +54,7 @@ export async function generateProfileWithAI(gender: 'male' | 'female'): Promise<
   const prompt = `Generate a realistic dating profile for a ${gender} Thai person aged 25-35. 
 Return ONLY a valid JSON object with these exact fields:
 {
-  "firstName": "Thai first name (romanized)",
-  "lastName": "Thai last name (romanized)", 
+  "username": "short username in lowercase letters only, no spaces or special characters, 3-15 characters based on Thai first name", 
   "bio": "Dating bio (2-3 sentences, casual and friendly, 100-200 chars)",
   "interests": ["5-7 interests from: Travel, Photography, Cooking, Music, Fitness, Reading, Movies, Beach, Hiking, Dancing, Art, Food, Yoga, Meditation, Gaming, Shopping, Nightlife, Coffee, Thai Culture, Languages, Animals, Nature"],
   "languages": ["2-3 languages from: Thai, English, Chinese, Japanese, Korean, French, German"],
@@ -205,8 +203,7 @@ export async function createAIGeneratedProfile(gender: 'male' | 'female') {
   const completeProfile = {
     clerkId: `ai_generated_${uniqueId}`,
     email: `ai_${uniqueId}@generated.local`,
-    firstName: profileData.firstName,
-    lastName: profileData.lastName,
+    username: `${profileData.username}${Math.floor(Math.random() * 9999)}`,
     profilePhoto: imageUrl,
     photos: [imageUrl],
     bio: profileData.bio,
@@ -240,9 +237,9 @@ export async function createAIGeneratedProfile(gender: 'male' | 'female') {
 
 // Generate AI chat response based on conversation history and profile
 export async function generateAIChatResponse(
-  aiProfile: { firstName: string; bio: string; interests: string[]; gender: string },
+  aiProfile: { username: string; bio: string; interests: string[]; gender: string },
   userProfile: { 
-    firstName: string; 
+    username: string; 
     bio?: string; 
     interests?: string[]; 
     gender?: string;
@@ -256,7 +253,7 @@ export async function generateAIChatResponse(
   }
 
   // Build user context string
-  let userContext = `You are chatting with ${userProfile.firstName}`;
+  let userContext = `You are chatting with @${userProfile.username}`;
   if (userProfile.age) userContext += `, ${userProfile.age} years old`;
   if (userProfile.gender) userContext += `, ${userProfile.gender}`;
   if (userProfile.location) userContext += `, from ${userProfile.location}`;
@@ -269,7 +266,7 @@ export async function generateAIChatResponse(
     userContext += `\nTheir interests: ${userProfile.interests.join(', ')}`;
   }
 
-  const systemPrompt = `You are ${aiProfile.firstName}, a ${aiProfile.gender} Thai person on a dating app. 
+  const systemPrompt = `You are @${aiProfile.username}, a ${aiProfile.gender} Thai person on a dating app. 
 Your bio: "${aiProfile.bio}"
 Your interests: ${aiProfile.interests.join(', ')}
 

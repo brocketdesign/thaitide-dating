@@ -12,13 +12,13 @@ interface MatchModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentUser: {
-    firstName: string;
+    username: string;
     profilePhoto?: string;
     _id?: string;
   };
   matchedUser: {
     _id: string;
-    firstName: string;
+    username: string;
     profilePhoto?: string;
   };
   matchId: string;
@@ -145,7 +145,7 @@ export default function MatchModal({
               {currentUser.profilePhoto ? (
                 <img
                   src={getImageUrl(currentUser.profilePhoto)}
-                  alt={currentUser.firstName}
+                  alt={currentUser.username}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -155,7 +155,7 @@ export default function MatchModal({
               )}
             </div>
             <p className="text-white text-center mt-2 font-semibold text-lg">
-              {currentUser.firstName}
+              @{currentUser.username}
             </p>
           </div>
 
@@ -177,7 +177,7 @@ export default function MatchModal({
               {matchedUser.profilePhoto ? (
                 <img
                   src={getImageUrl(matchedUser.profilePhoto)}
-                  alt={matchedUser.firstName}
+                  alt={matchedUser.username}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -187,14 +187,14 @@ export default function MatchModal({
               )}
             </div>
             <p className="text-white text-center mt-2 font-semibold text-lg">
-              {matchedUser.firstName}
+              @{matchedUser.username}
             </p>
           </div>
         </div>
 
         {/* Match message */}
         <p className="text-white/90 text-center text-lg mb-8 max-w-md">
-          {t.matchModal.youAndLikedEachOther.replace('{name}', matchedUser.firstName)} 💕
+          {t.matchModal.youAndLikedEachOther.replace('{name}', '@' + matchedUser.username)} 💕
         </p>
 
         {/* Action buttons */}

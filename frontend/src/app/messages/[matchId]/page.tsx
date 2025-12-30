@@ -24,8 +24,7 @@ interface Message {
 
 interface OtherUser {
   _id: string;
-  firstName: string;
-  lastName: string;
+  username: string;
   profilePhoto?: string;
   age: number;
   gender: 'male' | 'female' | 'other';
@@ -410,12 +409,12 @@ export default function MessagesPage() {
                     {otherUser.profilePhoto ? (
                       <img
                         src={getImageUrl(otherUser.profilePhoto)}
-                        alt={otherUser.firstName}
+                        alt={otherUser.username}
                         className="w-full h-full object-cover"
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-r from-pink-400 to-purple-500 flex items-center justify-center text-white text-lg font-semibold">
-                        {otherUser.firstName.charAt(0)}
+                        {otherUser.username.charAt(0).toUpperCase()}
                       </div>
                     )}
                   </div>
@@ -430,7 +429,7 @@ export default function MessagesPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-semibold text-gray-800 truncate">
-                    {otherUser.firstName}
+                    @{otherUser.username}
                   </h2>
                   <span className="text-gray-500">{otherUser.age}</span>
                   {getGenderIcon(otherUser.gender)}
@@ -471,7 +470,7 @@ export default function MessagesPage() {
         <div className="flex-1 overflow-y-auto min-h-0 p-4 space-y-3">
           {messages.length === 0 && !loading && (
             <div className="text-center text-gray-500 mt-10">
-              <p className="text-lg">Say hello to {otherUser?.firstName || 'your match'}! 👋</p>
+              <p className="text-lg">Say hello to @{otherUser?.username || 'your match'}! 👋</p>
               <p className="text-sm mt-2">Start a conversation</p>
             </div>
           )}

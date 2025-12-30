@@ -10,8 +10,7 @@ import { useTranslation } from '@/lib/i18n';
 
 interface Profile {
   _id: string;
-  firstName: string;
-  lastName: string;
+  username: string;
   profilePhoto?: string;
   location: {
     city?: string;
@@ -237,7 +236,7 @@ export default function MatchesPage() {
                   {profile.profilePhoto ? (
                     <img
                       src={getImageUrl(profile.profilePhoto)}
-                      alt={profile.firstName}
+                      alt={profile.username}
                       className={`w-full h-full object-cover ${profile.isBlurred ? 'blur-lg' : ''}`}
                     />
                   ) : (
@@ -255,7 +254,7 @@ export default function MatchesPage() {
                 </div>
                 <div className="p-3">
                   <h3 className="text-lg font-bold truncate">
-                    {profile.firstName} {profile.lastName}
+                    @{profile.username}
                   </h3>
                   {profile.location && (
                     <p className="text-gray-600 text-sm truncate">

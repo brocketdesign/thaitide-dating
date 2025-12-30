@@ -107,7 +107,7 @@ io.on('connection', (socket) => {
       );
 
       // Get sender info for notification
-      const sender = await User.findById(data.senderId).select('firstName profilePhoto bio interests gender dateOfBirth location');
+      const sender = await User.findById(data.senderId).select('username profilePhoto bio interests gender dateOfBirth location');
       
       // Get unread count for receiver
       const unreadCount = await Message.countDocuments({
@@ -127,7 +127,7 @@ io.on('connection', (socket) => {
         io.to(receiverSocketId).emit('message_notification', {
           message,
           matchId: data.matchId,
-          senderName: sender?.firstName || 'Someone',
+          senderName: sender?.username ? `@${sender.username}` : 'Someone',
           senderPhoto: sender?.profilePhoto,
           unreadCount
         });
@@ -171,13 +171,13 @@ io.on('connection', (socket) => {
           // Generate AI response with full user context
           const aiResponse = await generateAIChatResponse(
             {
-              firstName: receiver.firstName,
+              username: receiver.username,
               bio: receiver.bio || '',
               interests: receiver.interests,
               gender: receiver.gender
             },
             {
-              firstName: sender?.firstName || 'friend',
+              username: sender?.username || 'friend',
               bio: sender?.bio,
               interests: sender?.interests,
               gender: sender?.gender,
@@ -226,7 +226,7 @@ io.on('connection', (socket) => {
                 });
               }
 
-              console.log(`🤖 AI response sent from ${receiver.firstName}: ${aiResponse.substring(0, 50)}...`);
+              console.log(`🤖 AI response sent from @${receiver.username}: ${aiResponse.substring(0, 50)}...`);
             } catch (aiSaveError) {
               console.error('Error saving AI response:', aiSaveError);
             }

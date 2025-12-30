@@ -10,8 +10,7 @@ import toast from 'react-hot-toast';
 
 interface UserProfile {
   _id: string;
-  firstName: string;
-  lastName: string;
+  username: string;
   email: string;
   profilePhoto?: string;
   photos: string[];
@@ -47,8 +46,7 @@ export default function EditProfilePage() {
   const [saving, setSaving] = useState(false);
   const [userId, setUserId] = useState<string>('');
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    username: '',
     dateOfBirth: '',
     gender: '',
     lookingFor: '',
@@ -83,8 +81,7 @@ export default function EditProfilePage() {
         
         setUserId(profile._id);
         setFormData({
-          firstName: profile.firstName || '',
-          lastName: profile.lastName || '',
+          username: profile.username || '',
           dateOfBirth: profile.dateOfBirth ? profile.dateOfBirth.split('T')[0] : '',
           gender: profile.gender || '',
           lookingFor: profile.lookingFor || '',
@@ -312,34 +309,18 @@ export default function EditProfilePage() {
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Basic Info</h2>
             
             <div className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    First Name
-                  </label>
-                  <input
-                    type="text"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Last Name
-                  </label>
-                  <input
-                    type="text"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  name="username"
+                  value={formData.username}
+                  disabled
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
+                />
+                <p className="text-xs text-gray-500 mt-1">Username cannot be changed</p>
               </div>
 
               <div>

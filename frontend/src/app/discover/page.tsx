@@ -11,8 +11,7 @@ import { useTranslation } from '@/lib/i18n';
 
 interface User {
   _id: string;
-  firstName: string;
-  lastName: string;
+  username: string;
   profilePhoto?: string;
   bio?: string;
   location: {
@@ -224,7 +223,7 @@ function SwipeCard({ user, onSwipe, calculateAge, onViewProfile, isTop, translat
             {user.profilePhoto ? (
               <img
                 src={getImageUrl(user.profilePhoto)}
-                alt={user.firstName}
+                alt={user.username}
                 className="w-full h-full object-cover pointer-events-none"
                 draggable={false}
               />
@@ -281,7 +280,7 @@ function SwipeCard({ user, onSwipe, calculateAge, onViewProfile, isTop, translat
             <div className="absolute bottom-0 left-0 right-0 p-4 text-white z-10">
               <div className="flex items-center gap-2">
                 <h2 className="text-2xl font-bold drop-shadow-lg">
-                  {user.firstName}, {calculateAge(user.dateOfBirth)}
+                  @{user.username}, {calculateAge(user.dateOfBirth)}
                 </h2>
                 {user.isAI && (
                   <span className="flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-xs rounded-full font-medium">
@@ -393,6 +392,10 @@ export default function DiscoverPage() {
   const [viewMode, setViewMode] = useState<'card' | 'grid'>('card');
   const [dbUserId, setDbUserId] = useState<string | null>(null);
   const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<User[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
   const [filters, setFilters] = useState({
     maxDistance: 0, // 0 means any distance
     minAge: 18,
@@ -419,6 +422,41 @@ export default function DiscoverPage() {
   const [showMatchModal, setShowMatchModal] = useState(false);
   const [matchedUser, setMatchedUser] = useState<User | null>(null);
   const [matchId, setMatchId] = useState<string>('');
+
+  // Search users by username
+  const handleSearch = useCallback(async (query: string) => {
+    if (!query.trim() || !dbUserId) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const response = await userApi.searchByUsername(dbUserId, query);
+      setSearchResults(response.data.users || []);
+      setShowSearchResults(true);
+    } catch (error) {
+      console.error('Search error:', error);
+      toast.error('Failed to search');
+    } finally {
+      setIsSearching(false);
+    }
+  }, [dbUserId]);
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery) {
+        handleSearch(searchQuery);
+      } else {
+        setSearchResults([]);
+        setShowSearchResults(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, handleSearch]);
 
   // Load view mode preference from localStorage on mount
   useEffect(() => {
@@ -643,6 +681,83 @@ export default function DiscoverPage() {
               <FaSlidersH className="text-purple-600" />
             </button>
           </div>
+        </div>
+
+        {/* Username Search Bar */}
+        <div className="relative mb-6">
+          <div className="relative">
+            <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t.discover.searchByUsername || 'Search by username...'}
+              className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-full shadow-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setSearchResults([]);
+                  setShowSearchResults(false);
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+          
+          {/* Search Results Dropdown */}
+          {showSearchResults && searchResults.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl z-50 max-h-[400px] overflow-y-auto">
+              <div className="p-2">
+                {searchResults.map((user) => (
+                  <button
+                    key={user._id}
+                    onClick={() => {
+                      router.push(`/profile/${user._id}`);
+                      setShowSearchResults(false);
+                      setSearchQuery('');
+                    }}
+                    className="w-full flex items-center gap-3 p-3 hover:bg-pink-50 rounded-xl transition-colors text-left"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
+                      {user.profilePhoto ? (
+                        <img
+                          src={getImageUrl(user.profilePhoto)}
+                          alt={user.username}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xl">👤</div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-800 truncate">@{user.username}</p>
+                      <p className="text-sm text-gray-500 truncate">
+                        {user.location?.city && `${user.location.city}`}
+                        {user.location?.city && user.location?.country && ', '}
+                        {user.location?.country}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {showSearchResults && searchResults.length === 0 && searchQuery && !isSearching && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl z-50 p-4 text-center text-gray-500">
+              No users found with username "@{searchQuery}"
+            </div>
+          )}
+          
+          {isSearching && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl z-50 p-4 text-center">
+              <div className="animate-spin rounded-full h-6 w-6 border-2 border-pink-500 border-t-transparent mx-auto"></div>
+            </div>
+          )}
         </div>
 
         {/* Filters Panel */}
@@ -941,7 +1056,7 @@ export default function DiscoverPage() {
                         {user.profilePhoto ? (
                           <img
                             src={getImageUrl(user.profilePhoto)}
-                            alt={user.firstName}
+                            alt={user.username}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -972,7 +1087,7 @@ export default function DiscoverPage() {
                         <div className="absolute bottom-0 left-0 right-0 p-2 text-white">
                           <div className="flex items-center gap-1">
                             <h3 className="font-bold text-sm truncate">
-                              {user.firstName}, {calculateAge(user.dateOfBirth)}
+                              @{user.username}, {calculateAge(user.dateOfBirth)}
                             </h3>
                             {user.isAI && (
                               <span className="flex items-center gap-0.5 px-1 py-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-[8px] rounded-full font-medium">
@@ -1039,12 +1154,12 @@ export default function DiscoverPage() {
           isOpen={showMatchModal}
           onClose={() => setShowMatchModal(false)}
           currentUser={{
-            firstName: currentUserProfile.firstName,
+            username: currentUserProfile.username,
             profilePhoto: currentUserProfile.profilePhoto,
           }}
           matchedUser={{
             _id: matchedUser._id,
-            firstName: matchedUser.firstName,
+            username: matchedUser.username,
             profilePhoto: matchedUser.profilePhoto,
           }}
           matchId={matchId}

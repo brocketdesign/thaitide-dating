@@ -9,8 +9,7 @@ import toast from 'react-hot-toast';
 
 interface UserProfile {
   _id: string;
-  firstName: string;
-  lastName: string;
+  username: string;
   profilePhoto?: string;
   photos?: string[];
   bio?: string;
@@ -187,7 +186,7 @@ export default function UserProfilePage() {
             <FaArrowLeft className="text-gray-700 text-xl" />
           </button>
           <h1 className="ml-4 text-xl font-semibold text-gray-800">
-            {profile.firstName}'s Profile
+            @{profile.username}'s Profile
           </h1>
         </div>
       </div>
@@ -199,7 +198,7 @@ export default function UserProfilePage() {
             {allPhotos.length > 0 ? (
               <img
                 src={getImageUrl(allPhotos[currentPhotoIndex] || '')}
-                alt={profile.firstName}
+                alt={profile.username}
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -241,7 +240,7 @@ export default function UserProfilePage() {
         <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
           <div className="mb-4">
             <h2 className="text-3xl font-bold text-gray-800">
-              {profile.firstName} {profile.lastName}
+              @{profile.username}
               <span className="text-2xl font-normal text-gray-600 ml-2">
                 {calculateAge(profile.dateOfBirth)}
               </span>

@@ -12,8 +12,7 @@ import { useTranslation } from '@/lib/i18n';
 
 interface UserProfile {
   _id: string;
-  firstName: string;
-  lastName: string;
+  username: string;
   email: string;
   profilePhoto?: string;
   photos: string[];
@@ -118,7 +117,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const prevTitle = document.title;
     if (profile) {
-      document.title = `${profile.firstName} ${profile.lastName} — Profile`;
+      document.title = `@${profile.username} — Profile`;
     } else {
       document.title = 'Profile';
     }
@@ -210,7 +209,7 @@ export default function ProfilePage() {
                 <div className="aspect-[4/5] w-full">
                   <img
                     src={getImageUrl(allPhotos[activePhotoIndex])}
-                    alt={`${profile.firstName}'s photo`}
+                    alt={`@${profile.username}'s photo`}
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -272,7 +271,7 @@ export default function ProfilePage() {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h1 className="text-2xl font-bold text-gray-800">
-                  {profile.firstName} {profile.lastName}, {calculateAge(profile.dateOfBirth)}
+                  @{profile.username}, {calculateAge(profile.dateOfBirth)}
                 </h1>
                 {profile.location.city && (
                   <p className="text-gray-500 flex items-center gap-1 mt-1">

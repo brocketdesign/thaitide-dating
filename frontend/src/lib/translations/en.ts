@@ -80,6 +80,7 @@ export const en: Translations = {
   // Discover page
   discover: {
     title: 'Discover',
+    searchByUsername: 'Search by username...',
     noMoreProfiles: 'No more profiles',
     noMoreProfilesMessage: 'You\'ve seen everyone in your area!',
     adjustFilters: 'Adjust Filters',
@@ -240,8 +241,8 @@ export const en: Translations = {
     },
     basic: {
       title: 'Basic Information',
-      firstName: 'First Name',
-      lastName: 'Last Name',
+      username: 'Username',
+      usernamePlaceholder: 'Choose a unique username',
       dateOfBirth: 'Date of Birth',
       gender: 'Gender',
       genderOptions: {

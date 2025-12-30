@@ -6,10 +6,9 @@ import { Message } from '../models/Message';
 
 dotenv.config();
 
-// Thai first names
-const thaiMaleNames = ['Somchai', 'Prasert', 'Tanawat', 'Nattapong', 'Kittisak', 'Worawit', 'Surapong', 'Arthit', 'Pichaya', 'Thanakorn'];
-const thaiFemaleNames = ['Pornpan', 'Sukanya', 'Nattaya', 'Siriporn', 'Wanida', 'Pimchanok', 'Kannika', 'Rattana', 'Ploy', 'Araya'];
-const thaiLastNames = ['Srisawat', 'Thongchai', 'Phanomwan', 'Charoenpol', 'Wongsuwan', 'Pattanapong', 'Sittiporn', 'Nakprasit', 'Chaisri', 'Bunyasiri'];
+// Thai first names (for username generation)
+const thaiMaleNames = ['somchai', 'prasert', 'tanawat', 'nattapong', 'kittisak', 'worawit', 'surapong', 'arthit', 'pichaya', 'thanakorn'];
+const thaiFemaleNames = ['pornpan', 'sukanya', 'nattaya', 'siriporn', 'wanida', 'pimchanok', 'kannika', 'rattana', 'ploy', 'araya'];
 
 // Interests pool
 const interestsPool = [
@@ -156,8 +155,7 @@ export async function seedProfiles(): Promise<SeedResult> {
       profiles.push({
         clerkId: `${SEED_PREFIX}male_${i + 1}`,
         email: `${SEED_PREFIX}male${i + 1}@example.com`,
-        firstName: thaiMaleNames[i],
-        lastName: getRandomItem(thaiLastNames),
+        username: `${thaiMaleNames[i]}${Math.floor(Math.random() * 9999)}`,
         profilePhoto: malePhotos[i],
         photos: [malePhotos[i]],
         bio: maleBios[i],
@@ -193,8 +191,7 @@ export async function seedProfiles(): Promise<SeedResult> {
       profiles.push({
         clerkId: `${SEED_PREFIX}female_${i + 1}`,
         email: `${SEED_PREFIX}female${i + 1}@example.com`,
-        firstName: thaiFemaleNames[i],
-        lastName: getRandomItem(thaiLastNames),
+        username: `${thaiFemaleNames[i]}${Math.floor(Math.random() * 9999)}`,
         profilePhoto: femalePhotos[i],
         photos: [femalePhotos[i]],
         bio: femaleBios[i],
@@ -229,7 +226,7 @@ export async function seedProfiles(): Promise<SeedResult> {
     console.log(`✅ Successfully seeded ${result.length} profiles (10 male, 10 female)`);
     console.log('\n📋 Created profiles:');
     result.forEach((profile, index) => {
-      console.log(`  ${index + 1}. ${profile.firstName} ${profile.lastName} (${profile.gender}) - ${profile.location.city}`);
+      console.log(`  ${index + 1}. @${profile.username} (${profile.gender}) - ${profile.location.city}`);
     });
 
     return { profiles: result, insertedCount: result.length };

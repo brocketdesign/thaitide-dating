@@ -46,6 +46,9 @@ export const userApi = {
   removePhoto: (userId: string, photoUrl: string) => 
     api.delete(`/users/${userId}/photos`, { data: { photoUrl } }),
   checkProfileExists: (clerkId: string) => api.get(`/users/clerk/${clerkId}/exists`),
+  checkUsername: (username: string) => api.get(`/users/check-username/${username}`),
+  searchByUsername: (userId: string, query: string) => 
+    api.get(`/users/search/${userId}`, { params: { query } }),
 };
 
 // Match endpoints

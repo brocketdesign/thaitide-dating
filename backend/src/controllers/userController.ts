@@ -2,10 +2,69 @@ import { Request, Response } from 'express';
 import { User } from '../models/User';
 import { verifyUploadedPhoto } from '../services/photoVerification';
 
+// Check if username is available and get suggestions if not
+export const checkUsername = async (req: Request, res: Response) => {
+  try {
+    const { username } = req.params;
+    
+    const existingUser = await User.findOne({ username: username.toLowerCase() });
+    
+    if (!existingUser) {
+      return res.json({ available: true, suggestions: [] });
+    }
+    
+    // Generate 3 unique suggestions
+    const suggestions: string[] = [];
+    const baseUsername = username.toLowerCase().replace(/[0-9]+$/, '');
+    
+    let attempts = 0;
+    while (suggestions.length < 3 && attempts < 20) {
+      const randomNum = Math.floor(Math.random() * 9999) + 1;
+      const suggestion = `${baseUsername}${randomNum}`;
+      
+      const exists = await User.findOne({ username: suggestion });
+      if (!exists && !suggestions.includes(suggestion)) {
+        suggestions.push(suggestion);
+      }
+      attempts++;
+    }
+    
+    res.json({ available: false, suggestions });
+  } catch (error) {
+    console.error('Check username error:', error);
+    res.status(500).json({ message: 'Error checking username' });
+  }
+};
+
+// Search users by username
+export const searchByUsername = async (req: Request, res: Response) => {
+  try {
+    const { query } = req.query;
+    const { userId } = req.params;
+    
+    if (!query || typeof query !== 'string') {
+      return res.json({ users: [] });
+    }
+    
+    const users = await User.find({
+      _id: { $ne: userId },
+      username: { $regex: query, $options: 'i' },
+      profilePhoto: { $exists: true, $ne: '' }
+    })
+    .select('_id username profilePhoto bio location dateOfBirth interests height weight lookingFor createdAt isAI')
+    .limit(20);
+    
+    res.json({ users });
+  } catch (error) {
+    console.error('Search by username error:', error);
+    res.status(500).json({ message: 'Error searching users' });
+  }
+};
+
 export const createProfile = async (req: Request, res: Response) => {
   try {
     const { 
-      clerkId, email, firstName, lastName, dateOfBirth, gender, lookingFor, 
+      clerkId, email, username, dateOfBirth, gender, lookingFor, 
       location, languages, interests, bio, profilePhoto,
       height, weight, education, englishAbility, noChildren, wantsChildren 
     } = req.body;
@@ -15,11 +74,16 @@ export const createProfile = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Profile already exists' });
     }
 
+    // Check if username is taken
+    const usernameExists = await User.findOne({ username: username.toLowerCase() });
+    if (usernameExists) {
+      return res.status(400).json({ message: 'Username is already taken' });
+    }
+
     const user = new User({
       clerkId,
       email,
-      firstName,
-      lastName,
+      username: username.toLowerCase(),
       dateOfBirth,
       gender,
       lookingFor,

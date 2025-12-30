@@ -61,13 +61,13 @@ export const sendMessage = async (req: Request, res: Response) => {
         // Generate AI response with full user context
         const aiResponse = await generateAIChatResponse(
           {
-            firstName: receiver.firstName,
+            username: receiver.username,
             bio: receiver.bio || '',
             interests: receiver.interests,
             gender: receiver.gender
           },
           {
-            firstName: sender?.firstName || 'friend',
+            username: sender?.username || 'friend',
             bio: sender?.bio,
             interests: sender?.interests,
             gender: sender?.gender,
@@ -139,8 +139,8 @@ export const getMessages = async (req: Request, res: Response) => {
       .sort({ createdAt: -1 })
       .limit(Number(limit))
       .skip((Number(page) - 1) * Number(limit))
-      .populate('senderId', 'firstName lastName profilePhoto')
-      .populate('receiverId', 'firstName lastName profilePhoto');
+      .populate('senderId', 'username profilePhoto')
+      .populate('receiverId', 'username profilePhoto');
 
     res.json({ messages: messages.reverse() });
   } catch (error) {
@@ -179,8 +179,8 @@ export const getConversations = async (req: Request, res: Response) => {
     const matches = await Match.find({
       $or: [{ user1: userId }, { user2: userId }]
     } as any)
-      .populate('user1', 'firstName lastName profilePhoto location isAI')
-      .populate('user2', 'firstName lastName profilePhoto location isAI')
+      .populate('user1', 'username profilePhoto location isAI')
+      .populate('user2', 'username profilePhoto location isAI')
       .sort({ lastMessageAt: -1, createdAt: -1 });
 
     // Track seen user IDs to prevent duplicates

@@ -31,8 +31,7 @@ const LANGUAGES = [
 type Step = 'welcome' | 'basic' | 'looking-for' | 'location' | 'about' | 'preferences' | 'photos' | 'complete';
 
 interface ProfileData {
-  firstName: string;
-  lastName: string;
+  username: string;
   dateOfBirth: string;
   gender: string;
   lookingFor: string;
@@ -66,9 +65,11 @@ export default function OnboardingPage() {
   const [photoVerified, setPhotoVerified] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [usernameChecking, setUsernameChecking] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [usernameSuggestions, setUsernameSuggestions] = useState<string[]>([]);
   const [profileData, setProfileData] = useState<ProfileData>({
-    firstName: '',
-    lastName: '',
+    username: '',
     dateOfBirth: '',
     gender: '',
     lookingFor: '',
@@ -147,16 +148,36 @@ export default function OnboardingPage() {
     checkExistingProfile();
   }, [user, isLoaded, router]);
 
-  // Pre-fill with Clerk data
-  useEffect(() => {
-    if (user) {
-      setProfileData(prev => ({
-        ...prev,
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-      }));
+  // Check username availability with debounce
+  const checkUsernameAvailability = async (username: string) => {
+    if (!username || username.length < 3) {
+      setUsernameAvailable(null);
+      setUsernameSuggestions([]);
+      return;
     }
-  }, [user]);
+
+    setUsernameChecking(true);
+    try {
+      const response = await userApi.checkUsername(username);
+      setUsernameAvailable(response.data.available);
+      setUsernameSuggestions(response.data.suggestions || []);
+    } catch (error) {
+      console.error('Error checking username:', error);
+    } finally {
+      setUsernameChecking(false);
+    }
+  };
+
+  // Debounce username check
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (profileData.username) {
+        checkUsernameAvailability(profileData.username);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [profileData.username]);
 
   const steps: Step[] = ['welcome', 'basic', 'looking-for', 'location', 'about', 'preferences', 'photos', 'complete'];
   const currentStepIndex = steps.indexOf(currentStep);
@@ -184,8 +205,7 @@ export default function OnboardingPage() {
       await userApi.createProfile({
         clerkId: user.id,
         email: user.primaryEmailAddress?.emailAddress || '',
-        firstName: profileData.firstName,
-        lastName: profileData.lastName,
+        username: profileData.username,
         dateOfBirth: profileData.dateOfBirth,
         gender: profileData.gender,
         lookingFor: profileData.lookingFor,
@@ -389,31 +409,50 @@ export default function OnboardingPage() {
             </div>
 
             <div className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t.onboarding.basic.firstName} *
-                  </label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t.onboarding.basic.username} *
+                </label>
+                <div className="relative">
                   <input
                     type="text"
-                    value={profileData.firstName}
-                    onChange={(e) => setProfileData({ ...profileData, firstName: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
-                    placeholder={t.onboarding.basic.firstName}
+                    value={profileData.username}
+                    onChange={(e) => setProfileData({ ...profileData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })}
+                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all ${
+                      usernameAvailable === true ? 'border-green-500' : 
+                      usernameAvailable === false ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder={t.onboarding.basic.usernamePlaceholder || 'Choose a unique username'}
                   />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {usernameChecking && <FaSpinner className="animate-spin text-gray-400" />}
+                    {!usernameChecking && usernameAvailable === true && <FaCheck className="text-green-500" />}
+                    {!usernameChecking && usernameAvailable === false && <FaExclamationTriangle className="text-red-500" />}
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t.onboarding.basic.lastName} *
-                  </label>
-                  <input
-                    type="text"
-                    value={profileData.lastName}
-                    onChange={(e) => setProfileData({ ...profileData, lastName: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
-                    placeholder={t.onboarding.basic.lastName}
-                  />
-                </div>
+                {profileData.username && profileData.username.length < 3 && (
+                  <p className="text-sm text-orange-500 mt-1">Username must be at least 3 characters</p>
+                )}
+                {usernameAvailable === false && usernameSuggestions.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-sm text-red-500 mb-2">Username is taken. Try one of these:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {usernameSuggestions.map((suggestion) => (
+                        <button
+                          key={suggestion}
+                          type="button"
+                          onClick={() => setProfileData({ ...profileData, username: suggestion })}
+                          className="px-3 py-1 bg-pink-100 text-pink-600 rounded-full text-sm hover:bg-pink-200 transition-colors"
+                        >
+                          @{suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {usernameAvailable === true && (
+                  <p className="text-sm text-green-500 mt-1">✓ Username is available!</p>
+                )}
               </div>
 
               <div>
@@ -465,7 +504,7 @@ export default function OnboardingPage() {
               </button>
               <button
                 onClick={nextStep}
-                disabled={!profileData.firstName || !profileData.lastName || !profileData.dateOfBirth || !profileData.gender}
+                disabled={!profileData.username || profileData.username.length < 3 || usernameAvailable !== true || !profileData.dateOfBirth || !profileData.gender}
                 className="px-8 py-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-full font-semibold hover:shadow-lg transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
               >
                 {t.common.next} <FaArrowRight />
