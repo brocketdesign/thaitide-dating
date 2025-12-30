@@ -74,13 +74,19 @@ export const swipeLeft = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // Remove from likes if previously liked (unlike functionality)
+    const likeIndex = user.likes.findIndex(id => id.toString() === targetUserId);
+    if (likeIndex > -1) {
+      user.likes.splice(likeIndex, 1);
+    }
+
     // Add to dislikes
     if (!user.dislikes.some(id => id.toString() === targetUserId)) {
       user.dislikes.push(targetUserId as any);
       await user.save();
     }
 
-    res.json({ success: true });
+    res.json({ success: true, wasUnliked: likeIndex > -1 });
   } catch (error) {
     console.error('Swipe left error:', error);
     res.status(500).json({ message: 'Error processing dislike' });
@@ -437,6 +443,26 @@ export const recordProfileVisit = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Record profile visit error:', error);
     res.status(500).json({ message: 'Error recording profile visit' });
+  }
+};
+
+// Check interaction status between users (liked/passed)
+export const getInteractionStatus = async (req: Request, res: Response) => {
+  try {
+    const { userId, targetUserId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const hasLiked = user.likes.some(id => id.toString() === targetUserId);
+    const hasPassed = user.dislikes.some(id => id.toString() === targetUserId);
+
+    res.json({ hasLiked, hasPassed, hasInteracted: hasLiked || hasPassed });
+  } catch (error) {
+    console.error('Get interaction status error:', error);
+    res.status(500).json({ message: 'Error fetching interaction status' });
   }
 };
 

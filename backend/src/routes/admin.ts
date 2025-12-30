@@ -249,4 +249,35 @@ router.get('/check-image-task/:taskId', async (req: Request, res: Response) => {
   }
 });
 
+// Toggle premium status for a user
+router.post('/toggle-premium/:clerkId', async (req: Request, res: Response) => {
+  try {
+    const { clerkId } = req.params;
+
+    const user = await User.findOne({ clerkId });
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    // Toggle the isPremium status
+    user.isPremium = !user.isPremium;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: user.isPremium 
+        ? `✨ Premium activated for @${user.username}` 
+        : `Premium deactivated for @${user.username}`,
+      isPremium: user.isPremium
+    });
+  } catch (error) {
+    console.error('Error toggling premium:', error);
+    res.status(500).json({ success: false, error: 'Failed to toggle premium status' });
+  }
+});
+
 export default router;
