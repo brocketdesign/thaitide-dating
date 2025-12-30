@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
-import { FaBug, FaUserSlash, FaCommentSlash, FaTrashAlt, FaTimes, FaRedo, FaUsers, FaRobot, FaMars, FaVenus } from 'react-icons/fa';
+import { FaBug, FaUserSlash, FaCommentSlash, FaTrashAlt, FaTimes, FaRedo, FaUsers, FaRobot, FaMars, FaVenus, FaCrown } from 'react-icons/fa';
 
 const API_URL = typeof window !== 'undefined' 
   ? `${window.location.protocol}//${window.location.hostname}:5000/api`
@@ -22,6 +22,7 @@ export default function AdminDebugMenu() {
   const [loading, setLoading] = useState<string | null>(null);
   const [result, setResult] = useState<ActionResult | null>(null);
   const [showAIMenu, setShowAIMenu] = useState(false);
+  const [isPremium, setIsPremium] = useState<boolean | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -150,6 +151,44 @@ export default function AdminDebugMenu() {
 
       // Keep result visible longer for AI generation
       setTimeout(() => setResult(null), 5000);
+    } catch (error) {
+      setResult({
+        success: false,
+        message: 'Failed to connect to server',
+      });
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleTogglePremium = async () => {
+    if (!user) {
+      setResult({
+        success: false,
+        message: 'You must be logged in to toggle premium',
+      });
+      return;
+    }
+
+    setLoading('toggle-premium');
+    setResult(null);
+
+    try {
+      const response = await fetch(`${API_URL}/admin/toggle-premium/${user.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      setResult(data);
+
+      if (data.success) {
+        setIsPremium(data.isPremium);
+      }
+
+      setTimeout(() => setResult(null), 3000);
     } catch (error) {
       setResult({
         success: false,
@@ -292,6 +331,23 @@ export default function AdminDebugMenu() {
                 </div>
               )}
             </div>
+
+            <button
+              onClick={handleTogglePremium}
+              disabled={loading !== null}
+              className="w-full flex items-center gap-3 px-3 py-2 text-left text-sm text-gray-200 hover:bg-gray-800 rounded-md transition-colors disabled:opacity-50"
+            >
+              <FaCrown className="text-yellow-400" />
+              <div>
+                <div className="font-medium">Toggle Premium</div>
+                <div className="text-xs text-gray-400">
+                  {isPremium === null ? 'Activate/deactivate' : isPremium ? 'Currently: Premium ✨' : 'Currently: Free'}
+                </div>
+              </div>
+              {loading === 'toggle-premium' && (
+                <div className="ml-auto animate-spin w-4 h-4 border-2 border-yellow-400 border-t-transparent rounded-full" />
+              )}
+            </button>
 
             <div className="my-1 border-t border-gray-700" />
 

@@ -124,8 +124,8 @@ export default function MessagesPage() {
         const userProfile = profileResponse.data.user;
         setCurrentUserId(dbUserId);
         
-        // Check if user has premium subscription
-        if (userProfile.subscription?.status === 'active') {
+        // Check if user has premium (either via subscription or direct isPremium flag)
+        if (userProfile.isPremium || userProfile.subscription?.status === 'active') {
           setIsPremiumUser(true);
         }
         

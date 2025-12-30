@@ -36,6 +36,8 @@ export default function UserProfilePage() {
   const [isMatched, setIsMatched] = useState(false);
   const [matchId, setMatchId] = useState<string | null>(null);
   const [startingConversation, setStartingConversation] = useState(false);
+  const [hasLiked, setHasLiked] = useState(false);
+  const [hasPassed, setHasPassed] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -63,6 +65,13 @@ export default function UserProfilePage() {
         if (matchResponse.data.exists && matchResponse.data.match) {
           setIsMatched(true);
           setMatchId(matchResponse.data.match._id);
+        }
+
+        // Check interaction status (liked/passed)
+        if (currentUserId !== userId) {
+          const interactionResponse = await matchApi.getInteractionStatus(currentUserId, userId);
+          setHasLiked(interactionResponse.data.hasLiked);
+          setHasPassed(interactionResponse.data.hasPassed);
         }
       } catch (error) {
         console.error('Error loading profile:', error);
@@ -95,17 +104,22 @@ export default function UserProfilePage() {
         if (response.data.matched) {
           setIsMatched(true);
           setMatchId(response.data.matchId);
+          setHasLiked(true);
           toast.success('🎉 It\'s a match!', {
             duration: 3000,
             icon: '❤️'
           });
         } else {
+          setHasLiked(true);
           toast.success('Like sent!');
           router.back();
         }
       } else {
-        await matchApi.swipeLeft(dbUserId, profile._id);
-        toast('Passed', { icon: '👋' });
+        const response = await matchApi.swipeLeft(dbUserId, profile._id);
+        const wasUnliked = response.data.wasUnliked;
+        setHasPassed(true);
+        setHasLiked(false);
+        toast(wasUnliked ? 'Removed from likes' : 'Passed', { icon: '👋' });
         router.back();
       }
     } catch (error: any) {
@@ -144,7 +158,11 @@ export default function UserProfilePage() {
     }
   };
 
-  const allPhotos = profile ? [profile.profilePhoto, ...(profile.photos || [])].filter(Boolean) : [];
+  const allPhotos = profile 
+    ? profile.profilePhoto
+      ? [profile.profilePhoto, ...(profile.photos || []).filter(p => p !== profile.profilePhoto)]
+      : profile.photos || []
+    : [];
 
   if (loading) {
     return (
@@ -298,6 +316,11 @@ export default function UserProfilePage() {
                 <FaEnvelope className="text-xl" />
                 Send Message
               </button>
+            ) : hasPassed ? (
+              /* User has passed on this profile - show nothing or a message */
+              <div className="bg-gray-100 py-4 px-6 rounded-2xl text-center">
+                <p className="text-gray-500">You passed on this profile</p>
+              </div>
             ) : (
               <div className="space-y-3">
                 {/* Send Message Button */}
@@ -319,21 +342,38 @@ export default function UserProfilePage() {
                   )}
                 </button>
                 
-                {/* Like/Pass Buttons */}
-                <div className="flex justify-center gap-6 bg-white/80 backdrop-blur-sm py-4 px-6 rounded-2xl shadow-xl">
-                  <button
-                    onClick={() => handleSwipe(false)}
-                    className="w-16 h-16 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform border-2 border-gray-100"
-                  >
-                    <FaTimes className="text-red-500 text-2xl" />
-                  </button>
-                  <button
-                    onClick={() => handleSwipe(true)}
-                    className="w-16 h-16 bg-gradient-to-r from-pink-500 to-red-500 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
-                  >
-                    <FaHeart className="text-white text-2xl" />
-                  </button>
-                </div>
+                {/* Like/Pass Buttons - Show only if not already liked */}
+                {!hasLiked ? (
+                  <div className="flex justify-center gap-6 bg-white/80 backdrop-blur-sm py-4 px-6 rounded-2xl shadow-xl">
+                    <button
+                      onClick={() => handleSwipe(false)}
+                      className="w-16 h-16 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform border-2 border-gray-100"
+                    >
+                      <FaTimes className="text-red-500 text-2xl" />
+                    </button>
+                    <button
+                      onClick={() => handleSwipe(true)}
+                      className="w-16 h-16 bg-gradient-to-r from-pink-500 to-red-500 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
+                    >
+                      <FaHeart className="text-white text-2xl" />
+                    </button>
+                  </div>
+                ) : (
+                  /* Already liked - show liked status with option to unlike (pass) */
+                  <div className="flex justify-center items-center gap-4 bg-white/80 backdrop-blur-sm py-4 px-6 rounded-2xl shadow-xl">
+                    <div className="flex items-center gap-2 text-pink-500">
+                      <FaHeart className="text-xl" />
+                      <span className="font-medium">Liked</span>
+                    </div>
+                    <button
+                      onClick={() => handleSwipe(false)}
+                      className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors text-gray-600"
+                    >
+                      <FaTimes className="text-sm" />
+                      <span className="text-sm">Remove Like</span>
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>

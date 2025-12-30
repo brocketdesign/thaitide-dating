@@ -55,11 +55,11 @@ export default function ProfilePage() {
       // Disconnect socket first
       socketService.disconnect();
       
-      // Clear local storage items related to auth
+      // Clear local storage items related to auth and app state
       if (typeof window !== 'undefined') {
-        // Clear Clerk-related items
+        // Clear Clerk-related items and thaitide app state (countdown, drafts, etc.)
         Object.keys(localStorage).forEach(key => {
-          if (key.startsWith('clerk') || key.startsWith('__clerk')) {
+          if (key.startsWith('clerk') || key.startsWith('__clerk') || key.startsWith('thaitide_')) {
             localStorage.removeItem(key);
           }
         });
@@ -199,7 +199,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 pt-16 md:pt-20 pb-20 md:pb-4">
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">{t.profile.title}</h1>
+        <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 mb-6">{t.profile.title}</h1>
         {/* Header Card with Photo */}
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-6">
           {/* Photo Gallery */}

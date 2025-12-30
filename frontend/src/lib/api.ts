@@ -64,6 +64,8 @@ export const matchApi = {
     api.post(`/matches/${userId}/conversation`, { targetUserId }),
   findMatchBetweenUsers: (userId: string, targetUserId: string) =>
     api.get(`/matches/${userId}/match-with/${targetUserId}`),
+  getInteractionStatus: (userId: string, targetUserId: string) =>
+    api.get(`/matches/${userId}/interaction-status/${targetUserId}`),
   getLikedProfiles: (userId: string) => api.get(`/matches/${userId}/liked`),
   getWhoLikedMe: (userId: string) => api.get(`/matches/${userId}/who-liked-me`),
   getProfileVisitors: (userId: string) => api.get(`/matches/${userId}/visitors`),

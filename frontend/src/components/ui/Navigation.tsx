@@ -30,11 +30,11 @@ export default function Navigation() {
       setDbUserId(null);
       setUnreadCount(0);
       
-      // Clear local storage items related to auth
+      // Clear local storage items related to auth and app state
       if (typeof window !== 'undefined') {
-        // Clear Clerk-related items
+        // Clear Clerk-related items and thaitide app state (countdown, drafts, etc.)
         Object.keys(localStorage).forEach(key => {
-          if (key.startsWith('clerk') || key.startsWith('__clerk')) {
+          if (key.startsWith('clerk') || key.startsWith('__clerk') || key.startsWith('thaitide_')) {
             localStorage.removeItem(key);
           }
         });
