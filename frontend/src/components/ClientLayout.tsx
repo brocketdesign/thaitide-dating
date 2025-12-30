@@ -15,9 +15,8 @@ interface ClientLayoutProps {
 }
 
 export default function ClientLayout({ children }: ClientLayoutProps) {
-  const hasClerkKey = typeof window !== 'undefined' && 
-    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && 
-    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.startsWith('pk_');
+  const hasClerkKey = !!(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && 
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.startsWith('pk_'));
 
   if (hasClerkKey) {
     return (
@@ -39,8 +38,13 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       <Toaster position="top-right" />
       <AdminDebugMenu />
       <PWAInstaller />
-      <div className="md:pt-16 pb-16 md:pb-0">
-        {children}
+      <div className="md:pt-16 pb-16 md:pb-0 flex items-center justify-center min-h-[50vh]">
+        <div className="text-center p-6 bg-red-50 rounded-lg border border-red-200 max-w-md mx-4">
+          <h2 className="text-lg font-semibold text-red-700 mb-2">Configuration Error</h2>
+          <p className="text-red-600">
+            Missing Clerk Publishable Key. Please check your environment variables.
+          </p>
+        </div>
       </div>
     </>
   );
