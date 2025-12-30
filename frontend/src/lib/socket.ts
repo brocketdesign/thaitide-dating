@@ -2,8 +2,7 @@ import { io, Socket } from 'socket.io-client';
 
 const getSocketUrl = () => {
   if (typeof window !== 'undefined') {
-    const { protocol, hostname } = window.location;
-    return `${protocol}//${hostname}:5000`;
+    return undefined;
   }
   return process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
 };

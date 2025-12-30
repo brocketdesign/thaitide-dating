@@ -31,6 +31,22 @@ const nextConfig: NextConfig = {
   // PWA Configuration
   compress: true,
   poweredByHeader: false,
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/:path*`,
+      },
+      {
+        source: '/uploads/:path*',
+        destination: `${process.env.BACKEND_URL || 'http://localhost:5000'}/uploads/:path*`,
+      },
+      {
+        source: '/socket.io/:path*',
+        destination: `${process.env.BACKEND_URL || 'http://localhost:5000'}/socket.io/:path*`,
+      },
+    ];
+  },
   headers: async () => {
     return [
       {

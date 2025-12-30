@@ -6,7 +6,7 @@
     "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
     "build": "cd backend && npm run build && cd ../frontend && npm run build",
     "start": "concurrently --kill-others-on-fail \"npm run start:backend\" \"npm run start:frontend\"",
-    "start:backend": "cd backend && npm start",
+    "start:backend": "cd backend && BACKEND_PORT=5000 npm start",
     "start:frontend": "cd frontend && npm start",
     "dev": "concurrently --kill-others-on-fail \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "cd backend && npm run dev",

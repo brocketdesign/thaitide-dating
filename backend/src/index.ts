@@ -288,7 +288,7 @@ io.on('connection', (socket) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.BACKEND_PORT || 5000;
 
 const startServer = async () => {
   try {

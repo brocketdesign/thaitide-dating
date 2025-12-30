@@ -2,8 +2,7 @@ import axios from 'axios';
 
 const getApiUrl = () => {
   if (typeof window !== 'undefined') {
-    const { protocol, hostname } = window.location;
-    return `${protocol}//${hostname}:5000/api`;
+    return '/api';
   }
   return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 };
@@ -17,8 +16,7 @@ export const getImageUrl = (path: string) => {
   }
   
   if (typeof window !== 'undefined') {
-    const { protocol, hostname } = window.location;
-    return `${protocol}//${hostname}:5000${path}`;
+    return path;
   }
   const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace('/api', '');
   return `${baseUrl}${path}`;
