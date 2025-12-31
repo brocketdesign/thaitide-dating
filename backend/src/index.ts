@@ -292,7 +292,15 @@ const PORT = process.env.BACKEND_PORT || 5000;
 
 const startServer = async () => {
   try {
+    console.log('Starting server initialization...');
+    console.log('Environment variables check:');
+    console.log('- PORT:', process.env.PORT);
+    console.log('- BACKEND_PORT:', process.env.BACKEND_PORT);
+    console.log('- NODE_ENV:', process.env.NODE_ENV);
+    console.log('- MONGODB_URI exists:', !!process.env.MONGODB_URI);
+    
     await connectDatabase();
+    console.log('Database connection established');
     
     server.listen(PORT, () => {
       console.log(`🚀 Server is running on port ${PORT}`);
