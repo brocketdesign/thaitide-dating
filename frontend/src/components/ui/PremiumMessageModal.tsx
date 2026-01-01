@@ -37,13 +37,13 @@ export default function PremiumMessageModal({
 
   useEffect(() => {
     if (isOpen) {
-      setIsAnimating(true);
+      if (!isAnimating) setIsAnimating(true);
       setTimeout(() => setShowContent(true), 100);
     } else {
       setShowContent(false);
-      setIsAnimating(false);
+      if (isAnimating) setIsAnimating(false);
     }
-  }, [isOpen]);
+  }, [isOpen, isAnimating]);
 
   const formatTime = useCallback((seconds: number) => {
     const mins = Math.floor(seconds / 60);

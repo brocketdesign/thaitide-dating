@@ -194,9 +194,13 @@ export const en: Translations = {
   premium: {
     title: 'Unlock Premium Features',
     subtitle: 'Boost your chances of finding love with our premium plans',
+    currency: 'USD',
+    currencySymbol: '$',
     plans: {
       premium: {
         name: 'Premium',
+        price: '9.99',
+        priceDisplay: '$9.99',
         features: [
           'Unlimited likes',
           'See who liked you',
@@ -208,6 +212,8 @@ export const en: Translations = {
       },
       premiumPlus: {
         name: 'Premium Plus',
+        price: '19.99',
+        priceDisplay: '$19.99',
         features: [
           'All Premium features',
           'Priority in discovery',
@@ -374,6 +380,8 @@ export const en: Translations = {
     unauthorized: 'Please sign in to continue',
     notFound: 'Not found',
     serverError: 'Server error. Please try again later.',
+    paymentCanceled: 'Payment was canceled',
+    profileNotFound: 'Please create a profile first',
   },
   
   // Toast messages
@@ -384,5 +392,29 @@ export const en: Translations = {
     photoUploaded: 'Photo uploaded successfully!',
     subscriptionCreated: 'Subscription created!',
     signOutSuccess: 'Signed out successfully',
+  },
+
+  // Subscription management
+  subscription: {
+    title: 'Manage Subscription',
+    subtitle: 'View and manage your subscription details',
+    noSubscription: 'No Active Subscription',
+    noSubscriptionMessage: "You don't have an active subscription. Upgrade to Premium to unlock all features!",
+    signInRequired: 'Please sign in to manage your subscription.',
+    billingPeriod: 'Billing Period',
+    nextBilling: 'Next Billing Date',
+    includedFeatures: 'Included Features',
+    cancelSubscription: 'Cancel Subscription',
+    cancelConfirmMessage: 'Are you sure you want to cancel? You will lose access to premium features after your current billing period ends.',
+    confirmCancel: 'Yes, Cancel',
+    cancelSuccess: 'Subscription canceled successfully',
+    canceledNotice: 'Subscription Canceled',
+    accessUntil: 'You will have access to premium features until',
+    resubscribe: 'Resubscribe',
+    statusActive: 'Active',
+    statusCanceled: 'Canceled',
+    statusPastDue: 'Past Due',
+    statusPending: 'Pending',
+    manageSubscription: 'Manage Subscription',
   },
 };

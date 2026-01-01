@@ -16,11 +16,13 @@ export default function PWAInstaller() {
   const [isIOS, setIsIOS] = useState(false);
   const { t } = useTranslation();
 
+  // Detect iOS on mount
   useEffect(() => {
-    // Detect iOS
     const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent);
     setIsIOS(isIOSDevice);
+  }, []);
 
+  useEffect(() => {
     // Apply app mode styling when in app mode
     if (appMode.isAppMode) {
       document.documentElement.style.setProperty('--app-mode', '1');
@@ -29,10 +31,11 @@ export default function PWAInstaller() {
 
   useEffect(() => {
     // Only show install prompt if not installed and on a supporting platform
-    if (installPrompt && !isInstalled && !isIOS) {
-      setShowInstallPrompt(true);
+    const shouldShow = installPrompt && !isInstalled && !isIOS;
+    if (shouldShow !== showInstallPrompt) {
+      setShowInstallPrompt(shouldShow);
     }
-  }, [installPrompt, isInstalled, isIOS]);
+  }, [installPrompt, isInstalled, isIOS, showInstallPrompt]);
 
   const handleInstall = async () => {
     const installed = await promptInstall();

@@ -5,16 +5,13 @@ const isPublicRoute = createRouteMatcher([
   '/',
   '/sign-in(.*)',
   '/sign-up(.*)',
-  '/api/webhooks(.*)'
+  '/api/webhooks(.*)',
+  '/auth-redirect(.*)'
 ]);
 
 const isAuthRoute = createRouteMatcher([
   '/sign-in(.*)',
   '/sign-up(.*)',
-]);
-
-const isOnboardingRoute = createRouteMatcher([
-  '/onboarding(.*)'
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
@@ -26,23 +23,24 @@ export default clerkMiddleware(async (auth, request) => {
     return;
   }
 
-  const { userId } = await auth();
-  const { pathname } = request.nextUrl;
+  const authObj = await auth();
+  const { userId } = authObj;
+  const { pathname, searchParams } = request.nextUrl;
 
-  // Redirect authenticated users from landing page or auth pages to discover
-  // (discover page will check if profile exists and redirect to onboarding if needed)
+  // Handle Clerk handshake/sync parameters - let them pass through to the client
+  if (searchParams.has('__clerk_db_jwt') || searchParams.has('__clerk_status')) {
+    return;
+  }
+
+  // Redirect authenticated users from landing page or auth pages to auth-redirect
+  // (auth-redirect will check if profile exists and redirect to onboarding if needed)
   if (userId && (pathname === '/' || isAuthRoute(request))) {
-    const discoverUrl = new URL('/auth-redirect', request.url);
-    return NextResponse.redirect(discoverUrl);
+    const redirectUrl = new URL('/auth-redirect', request.url);
+    return NextResponse.redirect(redirectUrl);
   }
 
-  // Protect non-public routes (except onboarding which needs auth)
-  if (!isPublicRoute(request) && !isOnboardingRoute(request)) {
-    await auth.protect();
-  }
-
-  // Protect onboarding route
-  if (isOnboardingRoute(request)) {
+  // Protect all non-public routes
+  if (!isPublicRoute(request)) {
     await auth.protect();
   }
 });

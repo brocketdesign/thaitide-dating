@@ -87,8 +87,12 @@ export const messageApi = {
 
 // Subscription endpoints
 export const subscriptionApi = {
-  createCheckout: (userId: string, plan: string) => 
-    api.post('/subscriptions/create-checkout', { userId, plan }),
+  createCheckout: (userId: string, plan: string, currency: string = 'usd') => 
+    api.post('/subscriptions/create-checkout', { userId, plan, currency }),
+  getSubscription: (userId: string) => 
+    api.get(`/subscriptions/${userId}`),
+  cancelSubscription: (userId: string) => 
+    api.post(`/subscriptions/${userId}/cancel`),
 };
 
 // Upload endpoints

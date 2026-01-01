@@ -102,7 +102,10 @@ export default function Navigation() {
     if (!dbUserId) return;
 
     // Fetch initial unread count
-    fetchUnreadCount();
+    const initUnreadCount = async () => {
+      await fetchUnreadCount();
+    };
+    initUnreadCount();
     
     // Listen for real-time unread count updates
     const handleUnreadUpdate = (data: { unreadCount: number }) => {

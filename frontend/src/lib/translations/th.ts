@@ -194,9 +194,13 @@ export const th: Translations = {
   premium: {
     title: 'ปลดล็อคฟีเจอร์พรีเมียม',
     subtitle: 'เพิ่มโอกาสในการพบรักด้วยแพ็คเกจพรีเมียมของเรา',
+    currency: 'THB',
+    currencySymbol: '฿',
     plans: {
       premium: {
         name: 'พรีเมียม',
+        price: '349',
+        priceDisplay: '฿349',
         features: [
           'ถูกใจไม่จำกัด',
           'ดูว่าใครถูกใจคุณ',
@@ -208,6 +212,8 @@ export const th: Translations = {
       },
       premiumPlus: {
         name: 'พรีเมียมพลัส',
+        price: '699',
+        priceDisplay: '฿699',
         features: [
           'ฟีเจอร์พรีเมียมทั้งหมด',
           'ลำดับความสำคัญในการค้นหา',
@@ -374,6 +380,8 @@ export const th: Translations = {
     unauthorized: 'กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อ',
     notFound: 'ไม่พบข้อมูล',
     serverError: 'เซิร์ฟเวอร์มีปัญหา กรุณาลองใหม่ภายหลัง',
+    paymentCanceled: 'การชำระเงินถูกยกเลิก',
+    profileNotFound: 'กรุณาสร้างโปรไฟล์ก่อน',
   },
   
   // Toast messages
@@ -384,5 +392,29 @@ export const th: Translations = {
     photoUploaded: 'อัปโหลดรูปภาพสำเร็จ!',
     subscriptionCreated: 'สมัครสมาชิกสำเร็จ!',
     signOutSuccess: 'ออกจากระบบสำเร็จ',
+  },
+
+  // Subscription management
+  subscription: {
+    title: 'จัดการการสมัครสมาชิก',
+    subtitle: 'ดูและจัดการรายละเอียดการสมัครสมาชิกของคุณ',
+    noSubscription: 'ไม่มีการสมัครสมาชิก',
+    noSubscriptionMessage: 'คุณยังไม่มีการสมัครสมาชิก อัพเกรดเป็นพรีเมียมเพื่อปลดล็อคฟีเจอร์ทั้งหมด!',
+    signInRequired: 'กรุณาเข้าสู่ระบบเพื่อจัดการการสมัครสมาชิก',
+    billingPeriod: 'รอบการเรียกเก็บเงิน',
+    nextBilling: 'วันเรียกเก็บเงินถัดไป',
+    includedFeatures: 'ฟีเจอร์ที่รวมอยู่',
+    cancelSubscription: 'ยกเลิกการสมัครสมาชิก',
+    cancelConfirmMessage: 'คุณแน่ใจหรือไม่ที่จะยกเลิก? คุณจะสูญเสียการเข้าถึงฟีเจอร์พรีเมียมหลังจากรอบการเรียกเก็บเงินปัจจุบันสิ้นสุด',
+    confirmCancel: 'ใช่, ยกเลิก',
+    cancelSuccess: 'ยกเลิกการสมัครสมาชิกสำเร็จ',
+    canceledNotice: 'ยกเลิกการสมัครสมาชิกแล้ว',
+    accessUntil: 'คุณจะยังคงเข้าถึงฟีเจอร์พรีเมียมได้จนถึง',
+    resubscribe: 'สมัครใหม่',
+    statusActive: 'ใช้งานอยู่',
+    statusCanceled: 'ยกเลิกแล้ว',
+    statusPastDue: 'เลยกำหนดชำระ',
+    statusPending: 'รอดำเนินการ',
+    manageSubscription: 'จัดการการสมัครสมาชิก',
   },
 };

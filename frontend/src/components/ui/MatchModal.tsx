@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaHeart, FaPaperPlane, FaTimes } from 'react-icons/fa';
 import { getImageUrl, matchApi, userApi } from '@/lib/api';
@@ -37,6 +37,17 @@ export default function MatchModal({
   const [isAnimating, setIsAnimating] = useState(false);
   const [showContent, setShowContent] = useState(false);
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
+
+  // Generate random heart positions once to avoid calling Math.random during render
+  const heartPositions = useMemo(() => {
+    return [...Array(20)].map(() => ({
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      animationDelay: Math.random() * 3,
+      animationDuration: 3 + Math.random() * 4,
+      fontSize: 20 + Math.random() * 30,
+    }));
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -98,16 +109,16 @@ export default function MatchModal({
       {/* Animated background with hearts */}
       <div className="absolute inset-0 bg-gradient-to-br from-pink-600/95 via-purple-600/95 to-pink-600/95 backdrop-blur-sm overflow-hidden">
         {/* Floating hearts animation */}
-        {[...Array(20)].map((_, i) => (
+        {heartPositions.map((position, i) => (
           <div
             key={i}
             className="absolute animate-float-heart text-white/20"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${3 + Math.random() * 4}s`,
-              fontSize: `${20 + Math.random() * 30}px`,
+              left: `${position.left}%`,
+              top: `${position.top}%`,
+              animationDelay: `${position.animationDelay}s`,
+              animationDuration: `${position.animationDuration}s`,
+              fontSize: `${position.fontSize}px`,
             }}
           >
             ❤️

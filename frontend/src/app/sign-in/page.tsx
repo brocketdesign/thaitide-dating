@@ -12,17 +12,14 @@ export default function SignInPage() {
   // Clear any stale auth data on sign-in page load
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Clear Clerk-related items from storage to prevent stale sessions
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('clerk') || key.startsWith('__clerk')) {
-          localStorage.removeItem(key);
-        }
-      });
-      Object.keys(sessionStorage).forEach(key => {
-        if (key.startsWith('clerk') || key.startsWith('__clerk')) {
-          sessionStorage.removeItem(key);
-        }
-      });
+      // Only clear if we're not in the middle of a Clerk redirect
+      if (!window.location.search.includes('__clerk_db_jwt')) {
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('clerk-db-')) { // Only clear specific stale db items if needed
+            localStorage.removeItem(key);
+          }
+        });
+      }
     }
   }, []);
 

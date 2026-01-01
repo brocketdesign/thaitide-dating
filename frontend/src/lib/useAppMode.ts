@@ -50,10 +50,22 @@ export function useAppMode(): AppModeInfo {
     };
 
     // Set initial state
-    setAppModeInfo({
+    const initialAppModeInfo: AppModeInfo = {
       isAppMode: isStandalone,
       isInstalled: isInstalled,
       displayMode: isStandalone ? 'standalone' : 'browser',
+    };
+    
+    // Only update if different from current state
+    setAppModeInfo(current => {
+      if (
+        current.isAppMode !== initialAppModeInfo.isAppMode ||
+        current.isInstalled !== initialAppModeInfo.isInstalled ||
+        current.displayMode !== initialAppModeInfo.displayMode
+      ) {
+        return initialAppModeInfo;
+      }
+      return current;
     });
 
     if (isStandalone) {
@@ -93,7 +105,8 @@ export function useInstallPrompt() {
     window.addEventListener('appinstalled', handleAppInstalled);
 
     // Check if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
+    const alreadyInstalled = window.matchMedia('(display-mode: standalone)').matches;
+    if (alreadyInstalled && !isInstalled) {
       setIsInstalled(true);
     }
 

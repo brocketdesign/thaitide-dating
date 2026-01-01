@@ -1,5 +1,5 @@
 // ThaiTide Service Worker for PWA functionality
-const CACHE_NAME = 'thaitide-v1';
+const CACHE_NAME = 'thaitide-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/offline.html',
@@ -39,9 +39,27 @@ self.addEventListener('activate', (event) => {
 // Fetch event - network first, fallback to cache
 self.addEventListener('fetch', (event) => {
   const { request } = event;
+  const url = new URL(request.url);
 
   // Skip non-GET requests
   if (request.method !== 'GET') {
+    return;
+  }
+
+  // Skip auth-related routes entirely - don't cache or intercept these
+  // This prevents redirect loop issues in Safari
+  const authRoutes = [
+    '/auth-redirect',
+    '/sign-in',
+    '/sign-up',
+    '/api/auth',
+    '/_next/static',
+    '/clerk',
+  ];
+  
+  if (authRoutes.some(route => url.pathname.startsWith(route)) || 
+      url.hostname.includes('clerk') ||
+      url.pathname.includes('__clerk')) {
     return;
   }
 

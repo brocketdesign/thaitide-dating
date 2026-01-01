@@ -200,13 +200,19 @@ export interface Translations {
   premium: {
     title: string;
     subtitle: string;
+    currency: string;
+    currencySymbol: string;
     plans: {
       premium: {
         name: string;
+        price: string;
+        priceDisplay: string;
         features: string[];
       };
       premiumPlus: {
         name: string;
+        price: string;
+        priceDisplay: string;
         features: string[];
       };
     };
@@ -360,6 +366,8 @@ export interface Translations {
     unauthorized: string;
     notFound: string;
     serverError: string;
+    paymentCanceled: string;
+    profileNotFound: string;
   };
   
   // Toast messages
@@ -370,6 +378,30 @@ export interface Translations {
     photoUploaded: string;
     subscriptionCreated: string;
     signOutSuccess: string;
+  };
+
+  // Subscription management
+  subscription?: {
+    title: string;
+    subtitle: string;
+    noSubscription: string;
+    noSubscriptionMessage: string;
+    signInRequired: string;
+    billingPeriod: string;
+    nextBilling: string;
+    includedFeatures: string;
+    cancelSubscription: string;
+    cancelConfirmMessage: string;
+    confirmCancel: string;
+    cancelSuccess: string;
+    canceledNotice: string;
+    accessUntil: string;
+    resubscribe: string;
+    statusActive: string;
+    statusCanceled: string;
+    statusPastDue: string;
+    statusPending: string;
+    manageSubscription: string;
   };
 }
 
@@ -403,17 +435,23 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
   // Load saved language preference on mount
   useEffect(() => {
     const savedLang = localStorage.getItem(LANGUAGE_STORAGE_KEY) as Language | null;
+    let newLanguage: Language = 'en';
+    
     if (savedLang && (savedLang === 'en' || savedLang === 'th')) {
-      setLanguageState(savedLang);
+      newLanguage = savedLang;
     } else {
       // Auto-detect based on browser language
       const browserLang = navigator.language.toLowerCase();
       if (browserLang.startsWith('th')) {
-        setLanguageState('th');
+        newLanguage = 'th';
       }
     }
+    
+    if (newLanguage !== language) {
+      setLanguageState(newLanguage);
+    }
     setMounted(true);
-  }, []);
+  }, [language]);
 
   // Set language and persist
   const setLanguage = (lang: Language) => {
