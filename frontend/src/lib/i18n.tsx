@@ -63,6 +63,48 @@ export interface Translations {
     tagline: string;
     subtitle: string;
     getStarted: string;
+    stats: {
+      activeUsers: string;
+      successfulMatches: string;
+      userRating: string;
+    };
+    carousel: {
+      title: string;
+      subtitle: string;
+      verified: string;
+      online: string;
+    };
+    videoSections: {
+      chat: {
+        title: string;
+        description: string;
+        realTimeMessaging: string;
+        instantDelivery: string;
+        cta: string;
+      };
+      matching: {
+        title: string;
+        description: string;
+        aiPowered: string;
+        verifiedProfiles: string;
+        cta: string;
+      };
+      premium: {
+        title: string;
+        description: string;
+        unlimitedLikes: string;
+        seeViewers: string;
+        profileBoost: string;
+        cta: string;
+      };
+      success: {
+        title: string;
+        description: string;
+        testimonial: string;
+        testimonialAuthor: string;
+        cta: string;
+      };
+    };
     features: {
       smartMatching: {
         title: string;

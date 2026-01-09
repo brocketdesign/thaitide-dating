@@ -32,8 +32,7 @@ html[display-mode="standalone"] {
   --app-mode: 1;
 }
 
-body.app-mode,
-@supports (display: standalone) {
+body.app-mode {
   /* Hide Safari UI when in app mode */
   position: fixed;
   width: 100%;
@@ -45,6 +44,22 @@ body.app-mode,
   padding-left: max(12px, env(safe-area-inset-left));
   padding-right: max(12px, env(safe-area-inset-right));
   padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+@supports (display: standalone) {
+  body {
+    /* Hide Safari UI when in app mode */
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    
+    /* Account for safe areas on notched devices */
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
 }
 
 /* Optimize for app mode display */
@@ -78,4 +93,18 @@ body.app-mode,
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
   }
+}
+
+/* Profile Carousel Styles */
+.profile-carousel .swiper-slide {
+  transition: opacity 0.3s ease;
+}
+
+.profile-carousel .swiper-slide:not(.swiper-slide-active) {
+  opacity: 0.7;
+}
+
+/* Video section styling */
+video {
+  display: block;
 }

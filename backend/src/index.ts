@@ -40,14 +40,14 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: [process.env.FRONTEND_URL || 'http://localhost:3000', `http://${localIP}:3000`],
+    origin: [process.env.FRONTEND_URL || 'http://localhost:3000', `http://${localIP}:3000`, 'http://127.0.0.1:3000'],
     methods: ['GET', 'POST']
   }
 });
 
 // Middleware
 app.use(cors({
-  origin: [process.env.FRONTEND_URL || 'http://localhost:3000', `http://${localIP}:3000`]
+  origin: [process.env.FRONTEND_URL || 'http://localhost:3000', `http://${localIP}:3000`, 'http://127.0.0.1:3000']
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
@@ -88,6 +88,7 @@ io.on('connection', (socket) => {
     receiverId: string;
     content: string;
   }) => {
+    console.log('Received send_message:', data);
     try {
       const message = new Message({
         matchId: data.matchId,

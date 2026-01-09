@@ -1,10 +1,10 @@
 import { io, Socket } from 'socket.io-client';
 
 const getSocketUrl = () => {
-  if (typeof window !== 'undefined') {
-    return undefined;
-  }
-  return process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
+  const url = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
+  console.log('Socket URL from env:', process.env.NEXT_PUBLIC_SOCKET_URL);
+  console.log('Final socket URL:', url);
+  return url;
 };
 
 class SocketService {
@@ -12,15 +12,29 @@ class SocketService {
 
   connect(userId: string) {
     if (!this.socket) {
-      this.socket = io(getSocketUrl());
+      console.log('Connecting to socket URL:', getSocketUrl());
+      this.socket = io(getSocketUrl(), {
+        transports: ['polling', 'websocket'],
+        upgrade: true,
+        rememberUpgrade: true,
+        timeout: 20000,
+        forceNew: false,
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+      });
       
       this.socket.on('connect', () => {
-        console.log('Socket connected');
+        console.log('Socket connected successfully');
         this.socket?.emit('register', userId);
       });
 
-      this.socket.on('disconnect', () => {
-        console.log('Socket disconnected');
+      this.socket.on('connect_error', (error) => {
+        console.error('Socket connection error:', error);
+      });
+
+      this.socket.on('disconnect', (reason) => {
+        console.log('Socket disconnected:', reason);
       });
     }
     return this.socket;
@@ -43,7 +57,13 @@ class SocketService {
     receiverId: string;
     content: string;
   }) {
-    this.socket?.emit('send_message', data);
+    console.log('Sending message via socket:', data);
+    console.log('Socket connected:', this.socket?.connected);
+    if (this.socket?.connected) {
+      this.socket.emit('send_message', data);
+    } else {
+      console.error('Socket not connected, cannot send message');
+    }
   }
 
   onNewMessage(callback: (data: any) => void) {
@@ -68,6 +88,10 @@ class SocketService {
 
   onConversationRead(callback: (data: { matchId: string; unreadCount: number }) => void) {
     this.socket?.on('conversation_read', callback);
+  }
+
+  onMessageError(callback: (data: { error: string }) => void) {
+    this.socket?.on('message_error', callback);
   }
 
   emitTyping(data: { matchId: string; userId: string; receiverId: string }) {

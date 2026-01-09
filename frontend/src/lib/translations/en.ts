@@ -57,6 +57,48 @@ export const en: Translations = {
     tagline: 'Modern Dating for Thai Singles & Foreigners',
     subtitle: 'Connect for authentic romance and cultural discovery',
     getStarted: 'Get Started Free',
+    stats: {
+      activeUsers: 'Active Users',
+      successfulMatches: 'Successful Matches',
+      userRating: 'User Rating',
+    },
+    carousel: {
+      title: 'Real People, Real Connections',
+      subtitle: 'Join thousands of singles who found love on ThaiTide. See real profiles from our community.',
+      verified: 'Verified',
+      online: 'Online',
+    },
+    videoSections: {
+      chat: {
+        title: 'Instant Chat Made Simple',
+        description: 'Connect instantly with real-time messaging. No more waiting days for responses. Start meaningful conversations with your matches right away.',
+        realTimeMessaging: 'Real-time messaging',
+        instantDelivery: 'Instant delivery',
+        cta: 'Start Chatting Now',
+      },
+      matching: {
+        title: 'Smart Matching Technology',
+        description: 'Our advanced algorithms analyze compatibility based on interests, values, and preferences. Find your perfect match with AI-powered recommendations.',
+        aiPowered: 'AI-powered matching',
+        verifiedProfiles: 'Verified profiles',
+        cta: 'Find Your Match',
+      },
+      premium: {
+        title: 'Unlock Premium Benefits',
+        description: 'Get unlimited likes, see who viewed your profile, boost your visibility, and access exclusive features to find love faster.',
+        unlimitedLikes: 'Unlimited likes and super likes',
+        seeViewers: 'See who viewed your profile',
+        profileBoost: 'Profile boost for maximum visibility',
+        cta: 'Upgrade to Premium',
+      },
+      success: {
+        title: 'Real Success Stories',
+        description: 'Join over 500,000 happy couples who found love on ThaiTide. Real people, real connections, real happiness.',
+        testimonial: 'I found my soulmate on ThaiTide! The app made it so easy to connect with amazing people.',
+        testimonialAuthor: '- Sarah & Mike, Married 2 years',
+        cta: 'Join Our Community',
+      },
+    },
     features: {
       smartMatching: {
         title: 'Smart Matching',

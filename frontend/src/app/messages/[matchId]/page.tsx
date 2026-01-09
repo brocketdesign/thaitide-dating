@@ -49,6 +49,7 @@ export default function MessagesPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [typing, setTyping] = useState(false);
   const [sending, setSending] = useState(false);
   const [otherUser, setOtherUser] = useState<OtherUser | null>(null);
@@ -59,6 +60,7 @@ export default function MessagesPage() {
   const [countdown, setCountdown] = useState(COUNTDOWN_DURATION);
   const [pendingMessage, setPendingMessage] = useState('');
   const [hasSentFirstMessage, setHasSentFirstMessage] = useState(false);
+  const [shouldStartCountdown, setShouldStartCountdown] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -132,19 +134,21 @@ export default function MessagesPage() {
         // Store in localStorage for consistency
         localStorage.setItem('userId', dbUserId);
         
-        // Ensure conversation exists or create it
-        // First, get match details to find the other user
+        // Get match details to find the other user
         try {
           const response = await matchApi.getMatchDetails(matchId, dbUserId);
           setOtherUser(response.data.otherUser);
         } catch (error: any) {
-          // If match details fail, the match might not exist yet
-          // Try to create the conversation with the target user from URL params
-          console.log('Match details failed, attempting to create conversation');
+          // If match details fail, show error and allow user to go back
+          console.error('Match details failed:', error);
+          setLoadError('Conversation not found. Please try again.');
+          setLoading(false);
+          return;
         }
       } catch (error) {
         console.error('Failed to load match details:', error);
-        toast.error('Failed to load chat');
+        setLoadError('Failed to load chat. Please try again.');
+        setLoading(false);
       }
     }
     
@@ -188,17 +192,35 @@ export default function MessagesPage() {
               : msg
           )
         );
+        
+        // Start countdown only after server confirms message was saved
+        setShouldStartCountdown((prev) => {
+          if (prev) {
+            startGlobalCountdown();
+          }
+          return false;
+        });
       }
+    };
+
+    const handleMessageError = (data: any) => {
+      // Remove any optimistic messages that failed to send
+      setMessages((prev) => prev.filter((msg) => !msg._id.toString().startsWith('temp-')));
+      setUserMessageCount((prev) => Math.max(0, prev - 1));
+      setShouldStartCountdown(false);
+      toast.error(data.error || 'Failed to send message');
     };
 
     socketService.onNewMessage(handleNewMessage);
     socketService.onTyping(handleTyping);
     socketService.onMessageSent(handleMessageSent);
+    socketService.onMessageError(handleMessageError);
 
     return () => {
       socketService.removeListener('new_message', handleNewMessage);
       socketService.removeListener('user_typing', handleTyping);
       socketService.removeListener('message_sent', handleMessageSent);
+      socketService.removeListener('message_error', handleMessageError);
     };
   }, [matchId, currentUserId]);
 
@@ -261,6 +283,12 @@ export default function MessagesPage() {
     e.preventDefault();
     if (!newMessage.trim() || sending) return;
 
+    // Ensure we have the other user's ID before sending
+    if (!otherUser?._id) {
+      toast.error('Unable to send message. Please refresh the page.');
+      return;
+    }
+
     // For non-premium users: check global countdown
     // If user has already sent a message before (hasSentFirstMessage) and countdown is running, show modal
     if (!isPremiumUser && hasSentFirstMessage && countdown > 0) {
@@ -287,7 +315,13 @@ export default function MessagesPage() {
   const doSendMessage = async (messageContent: string) => {
     if (!messageContent || sending) return;
 
-    const receiverId = otherUser?._id || 'receiver-id';
+    // Ensure we have a valid receiver ID
+    if (!otherUser?._id) {
+      toast.error('Unable to send message. Please refresh the page.');
+      return;
+    }
+
+    const receiverId = otherUser._id;
     
     // Clear input and draft immediately for better UX
     setNewMessage('');
@@ -313,6 +347,11 @@ export default function MessagesPage() {
     setUserMessageCount(prev => prev + 1);
 
     try {
+      // Mark that countdown should start when message is confirmed
+      if (!isPremiumUser && (isVeryFirstMessage || isAfterCountdown)) {
+        setShouldStartCountdown(true);
+      }
+      
       socketService.sendMessage({
         matchId,
         senderId: currentUserId,
@@ -320,20 +359,13 @@ export default function MessagesPage() {
         content: messageContent
       });
       
-      // Start or reset global countdown for non-premium users
-      if (!isPremiumUser) {
-        if (isVeryFirstMessage || isAfterCountdown) {
-          // Start/restart global countdown after sending a message
-          startGlobalCountdown();
-        }
-      }
-      
-      // The message_sent event handler will replace the temp message with the real one from the server
+      // The message_sent event handler will replace the temp message and start countdown
     } catch (error) {
       toast.error('Failed to send message');
       // Remove optimistic message on error and revert counter
       setMessages(prev => prev.filter(msg => msg._id !== optimisticMessage._id));
       setUserMessageCount(prev => prev - 1);
+      setShouldStartCountdown(false);
     } finally {
       setSending(false);
       inputRef.current?.focus();
@@ -341,11 +373,11 @@ export default function MessagesPage() {
   };
 
   const handleTypingEvent = () => {
-    const receiverId = otherUser?._id || 'receiver-id';
+    if (!otherUser?._id) return;
     socketService.emitTyping({
       matchId,
       userId: currentUserId,
-      receiverId
+      receiverId: otherUser._id
     });
   };
 
@@ -374,7 +406,24 @@ export default function MessagesPage() {
     return null;
   };
 
-  if (!isLoaded || (loading && !otherUser)) {
+  if (loadError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 via-white to-purple-50">
+        <div className="text-center">
+          <div className="text-6xl mb-4">😕</div>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">{loadError}</h3>
+          <button
+            onClick={() => router.push('/messages')}
+            className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity"
+          >
+            Back to Messages
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isLoaded || loading || !otherUser) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 via-white to-purple-50">
         <div className="text-center">
