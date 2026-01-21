@@ -28,7 +28,16 @@ export default clerkMiddleware(async (auth, request) => {
   const { pathname, searchParams } = request.nextUrl;
 
   // Handle Clerk handshake/sync parameters - let them pass through to the client
-  if (searchParams.has('__clerk_db_jwt') || searchParams.has('__clerk_status')) {
+  // This allows the authentication flow to complete before redirecting
+  if (searchParams.has('__clerk_db_jwt') || 
+      searchParams.has('__clerk_status') || 
+      searchParams.has('__clerk_ticket') ||
+      searchParams.has('__clerk_created_session')) {
+    // If there's a userId with these params, redirect to auth-redirect to properly handle the flow
+    if (userId && !pathname.startsWith('/auth-redirect')) {
+      const redirectUrl = new URL('/auth-redirect', request.url);
+      return NextResponse.redirect(redirectUrl);
+    }
     return;
   }
 
