@@ -24,5 +24,8 @@ const messageSchema = new Schema<IMessage>(
 );
 
 messageSchema.index({ matchId: 1, createdAt: -1 });
+// Indexes for analytics queries
+messageSchema.index({ senderId: 1, createdAt: -1 });
+messageSchema.index({ createdAt: -1 });
 
 export const Message = model<IMessage>('Message', messageSchema);

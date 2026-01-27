@@ -15,6 +15,7 @@ import messageRoutes from './routes/messages';
 import subscriptionRoutes from './routes/subscriptions';
 import uploadRoutes from './routes/uploads';
 import adminRoutes from './routes/admin';
+import analyticsRoutes from './routes/analytics';
 import { Message } from './models/Message';
 import { User } from './models/User';
 import { Match } from './models/Match';
@@ -65,6 +66,7 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

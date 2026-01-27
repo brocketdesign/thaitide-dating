@@ -4,6 +4,7 @@ export interface IUser extends Document {
   clerkId: string;
   email: string;
   username: string;
+  role: 'user' | 'admin';
   profilePhoto?: string;
   photos: string[];
   bio?: string;
@@ -49,6 +50,7 @@ const userSchema = new Schema<IUser>(
     clerkId: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
     username: { type: String, required: true, unique: true },
+    role: { type: String, enum: ['user', 'admin'], default: 'user' },
     profilePhoto: { type: String },
     photos: [{ type: String }],
     bio: { type: String, maxlength: 500 },
@@ -67,32 +69,32 @@ const userSchema = new Schema<IUser>(
     height: { type: Number }, // in cm
     weight: { type: Number }, // in kg
     // Profile information
-    education: { 
-      type: String, 
+    education: {
+      type: String,
       enum: ['high-school', 'bachelor', 'master', 'phd', 'other']
     },
-    englishAbility: { 
-      type: String, 
+    englishAbility: {
+      type: String,
       enum: ['beginner', 'intermediate', 'fluent', 'native']
     },
     // Family preferences
-    noChildren: { 
-      type: String, 
+    noChildren: {
+      type: String,
       enum: ['yes', 'no', 'any'],
       default: 'any'
     },
-    wantsChildren: { 
-      type: String, 
+    wantsChildren: {
+      type: String,
       enum: ['yes', 'no', 'any'],
       default: 'any'
     },
     // Visibility and status
     lastActiveAt: { type: Date },
     verified: { type: Boolean, default: false },
-    photoVerificationStatus: { 
-      type: String, 
-      enum: ['pending', 'verified', 'rejected'], 
-      default: 'pending' 
+    photoVerificationStatus: {
+      type: String,
+      enum: ['pending', 'verified', 'rejected'],
+      default: 'pending'
     },
     isPremium: { type: Boolean, default: false },
     premiumUntil: { type: Date },
@@ -111,5 +113,11 @@ const userSchema = new Schema<IUser>(
 
 // Index for geospatial queries
 userSchema.index({ location: '2dsphere' });
+// Index for admin queries
+userSchema.index({ role: 1 });
+// Indexes for analytics queries
+userSchema.index({ createdAt: -1 });
+userSchema.index({ lastActiveAt: -1 });
+userSchema.index({ isPremium: 1, createdAt: -1 });
 
 export const User = model<IUser>('User', userSchema);

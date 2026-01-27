@@ -9,13 +9,16 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "seed": "ts-node src/seed/seedProfiles.ts seed",
     "seed:reset": "ts-node src/seed/seedProfiles.ts reset",
-    "seed:reset-all": "ts-node src/seed/seedProfiles.ts reset-all"
+    "seed:reset-all": "ts-node src/seed/seedProfiles.ts reset-all",
+    "add-admin": "ts-node src/scripts/addAdmin.ts",
+    "add-admin:interactive": "ts-node src/scripts/addAdminInteractive.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@clerk/backend": "^2.29.5",
     "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",

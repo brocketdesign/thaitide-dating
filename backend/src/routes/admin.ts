@@ -4,8 +4,13 @@ import { Match } from '../models/Match';
 import { Message } from '../models/Message';
 import { resetSeedProfiles, seedProfiles } from '../seed/seedProfiles';
 import { createAIGeneratedProfile, startImageGeneration, checkImageGeneration } from '../services/aiProfileGenerator';
+import { auth } from '../middleware/auth';
+import { admin } from '../middleware/admin';
 
 const router = Router();
+
+// Protect all admin routes with authentication and authorization middleware
+router.use(auth, admin);
 
 // Reset all user connections (likes, dislikes, matches, profile visitors)
 router.delete('/reset-connections', async (req: Request, res: Response) => {
