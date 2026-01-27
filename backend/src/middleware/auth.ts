@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { clerkClient } from '@clerk/backend';
+import { verifyToken } from '@clerk/backend';
 
 // Extend Express Request to include auth information
 declare global {
@@ -33,8 +33,8 @@ export const auth = async (req: Request, res: Response, next: NextFunction) => {
 
     // Verify token with Clerk
     try {
-      const session = await clerkClient.verifyToken(token, {
-        secretKey: process.env.CLERK_SECRET_KEY
+      const session = await verifyToken(token, {
+        secretKey: process.env.CLERK_SECRET_KEY!
       });
 
       // Attach user information to request
