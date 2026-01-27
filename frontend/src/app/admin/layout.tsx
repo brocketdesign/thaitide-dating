@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
-import { clientAnalyticsApi } from '@/lib/adminApi';
+import { clientAnalyticsApi } from '@/lib/adminApi.client';
 import Link from 'next/link';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

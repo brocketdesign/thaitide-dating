@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { clientAnalyticsApi } from '@/lib/adminApi';
+import { clientAnalyticsApi } from '@/lib/adminApi.client';
 import { FiSearch, FiFilter, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 export default function UsersPage() {

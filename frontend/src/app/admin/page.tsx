@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { clientAnalyticsApi } from '@/lib/adminApi';
+import { clientAnalyticsApi } from '@/lib/adminApi.client';
 import MetricsCard from '@/components/admin/MetricsCard';
 import ChartCard from '@/components/admin/ChartCard';
 import { FiUsers, FiHeart, FiMessageSquare, FiStar } from 'react-icons/fi';
